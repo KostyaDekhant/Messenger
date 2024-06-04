@@ -24,12 +24,12 @@ class Ui_Authorization
 public:
     QGridLayout *gridLayout_2;
     QGridLayout *gridLayout;
-    QLineEdit *lineEdit_2;
-    QLabel *label_3;
-    QLabel *label_2;
-    QLabel *label;
-    QLineEdit *lineEdit;
-    QPushButton *pushButton;
+    QLineEdit *password_line;
+    QLabel *Password_lb;
+    QLabel *Login_lb;
+    QLabel *Auth_lb;
+    QLineEdit *login_line;
+    QPushButton *Login_bttn;
 
     void setupUi(QWidget *Authorization)
     {
@@ -40,38 +40,38 @@ public:
         gridLayout_2->setObjectName("gridLayout_2");
         gridLayout = new QGridLayout();
         gridLayout->setObjectName("gridLayout");
-        lineEdit_2 = new QLineEdit(Authorization);
-        lineEdit_2->setObjectName("lineEdit_2");
+        password_line = new QLineEdit(Authorization);
+        password_line->setObjectName("password_line");
 
-        gridLayout->addWidget(lineEdit_2, 6, 0, 1, 1);
+        gridLayout->addWidget(password_line, 6, 0, 1, 1);
 
-        label_3 = new QLabel(Authorization);
-        label_3->setObjectName("label_3");
+        Password_lb = new QLabel(Authorization);
+        Password_lb->setObjectName("Password_lb");
 
-        gridLayout->addWidget(label_3, 5, 0, 1, 1);
+        gridLayout->addWidget(Password_lb, 5, 0, 1, 1);
 
-        label_2 = new QLabel(Authorization);
-        label_2->setObjectName("label_2");
+        Login_lb = new QLabel(Authorization);
+        Login_lb->setObjectName("Login_lb");
 
-        gridLayout->addWidget(label_2, 2, 0, 1, 1);
+        gridLayout->addWidget(Login_lb, 2, 0, 1, 1);
 
-        label = new QLabel(Authorization);
-        label->setObjectName("label");
+        Auth_lb = new QLabel(Authorization);
+        Auth_lb->setObjectName("Auth_lb");
         QFont font;
         font.setPointSize(30);
-        label->setFont(font);
+        Auth_lb->setFont(font);
 
-        gridLayout->addWidget(label, 1, 0, 1, 1);
+        gridLayout->addWidget(Auth_lb, 1, 0, 1, 1);
 
-        lineEdit = new QLineEdit(Authorization);
-        lineEdit->setObjectName("lineEdit");
+        login_line = new QLineEdit(Authorization);
+        login_line->setObjectName("login_line");
 
-        gridLayout->addWidget(lineEdit, 4, 0, 1, 1);
+        gridLayout->addWidget(login_line, 4, 0, 1, 1);
 
-        pushButton = new QPushButton(Authorization);
-        pushButton->setObjectName("pushButton");
+        Login_bttn = new QPushButton(Authorization);
+        Login_bttn->setObjectName("Login_bttn");
 
-        gridLayout->addWidget(pushButton, 7, 0, 1, 1);
+        gridLayout->addWidget(Login_bttn, 7, 0, 1, 1);
 
 
         gridLayout_2->addLayout(gridLayout, 0, 0, 1, 1);
@@ -85,10 +85,10 @@ public:
     void retranslateUi(QWidget *Authorization)
     {
         Authorization->setWindowTitle(QCoreApplication::translate("Authorization", "Form", nullptr));
-        label_3->setText(QCoreApplication::translate("Authorization", "\320\237\320\260\321\200\320\276\320\273\321\214", nullptr));
-        label_2->setText(QCoreApplication::translate("Authorization", "\320\233\320\276\320\263\320\270\320\275", nullptr));
-        label->setText(QCoreApplication::translate("Authorization", "\320\220\320\262\321\202\320\276\321\200\320\270\320\267\320\260\321\206\320\270\321\217", nullptr));
-        pushButton->setText(QCoreApplication::translate("Authorization", "\320\222\320\276\320\271\321\202\320\270", nullptr));
+        Password_lb->setText(QCoreApplication::translate("Authorization", "\320\237\320\260\321\200\320\276\320\273\321\214", nullptr));
+        Login_lb->setText(QCoreApplication::translate("Authorization", "\320\233\320\276\320\263\320\270\320\275", nullptr));
+        Auth_lb->setText(QCoreApplication::translate("Authorization", "\320\220\320\262\321\202\320\276\321\200\320\270\320\267\320\260\321\206\320\270\321\217", nullptr));
+        Login_bttn->setText(QCoreApplication::translate("Authorization", "\320\222\320\276\320\271\321\202\320\270", nullptr));
     } // retranslateUi
 
 };

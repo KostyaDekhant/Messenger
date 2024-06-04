@@ -11,13 +11,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, &MainWindow::authsignal, auth, &Authorization::authslot);
     connect(auth, &Authorization::authsignal, this, &MainWindow::authslot);
 
-
     socket = new QTcpSocket(this);
     connect(socket, &QTcpSocket::readyRead, this, &MainWindow::slotReadyRead);
     connect(socket, &QTcpSocket::disconnected, socket, &QTcpSocket::deleteLater);
     nextBlockSize = 0;
-
-
 }
 
 MainWindow::~MainWindow()
@@ -36,12 +33,29 @@ void MainWindow::SendToServer(QString str)
     Data.clear();
     QDataStream out(&Data, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_6_7);
-    out << quint16(0) << QTime::currentTime() << str;
+    QString msg_type = "message";
+    out << quint16(0) << msg_type << QTime::currentTime() << str;
     out.device()->seek(0);
     out << quint16(Data.size() - sizeof(quint16));
     socket->write(Data);
+    //qDebug() << Data;
     ui->lineEdit->clear();
 }
+
+void MainWindow::SendUserDataToServer(QJsonObject userData)
+{
+    Data.clear();
+    QDataStream out(&Data, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_6_7);
+    QString msg_type = "userinfo";
+    out << quint16(0) << msg_type << userData;
+    out.device()->seek(0);
+    out << quint16(Data.size() - sizeof(quint16));
+    socket->write(Data);
+    //qDebug() << "Инфа о пользователе: " << userData;
+    //ui->lineEdit->clear();
+}
+
 
 void MainWindow::slotReadyRead()
 {
@@ -79,9 +93,13 @@ void MainWindow::slotReadyRead()
     }
 }
 
-void MainWindow::authslot()
+void MainWindow::authslot(QJsonObject userData)
 {
     auth->close();
+    SendUserDataToServer(userData);
+    user = userData;
+    ui->Auth_bttn->setEnabled(false);
+    //qDebug() << "Инфа о пользователе: " << userData;
     this->show();
 }
 
@@ -94,11 +112,17 @@ void MainWindow::on_pushButton_2_clicked()
 
 void MainWindow::on_lineEdit_returnPressed()
 {
-     SendToServer(ui->lineEdit->text());
+    SendToServer(ui->lineEdit->text());
 }
 
 
 void MainWindow::on_pushButton_3_clicked()
+{
+
+}
+
+
+void MainWindow::on_Auth_bttn_clicked()
 {
     this->hide();
     auth->show();

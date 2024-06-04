@@ -6,8 +6,9 @@
 #include <QTime>
 #include <authorization.h>
 
-
+#include <QJsonDocument>
 #include <QJsonObject>
+#include <QJsonArray>
 #include <QJsonParseError>
 #include <QFile>
 //#include <QFileDialog>
@@ -37,21 +38,24 @@ private slots:
 
     void on_pushButton_3_clicked();
 
+    void on_Auth_bttn_clicked();
+
 private:
     Ui::MainWindow *ui;
     QTcpSocket *socket;
     QByteArray Data;
     void SendToServer(QString str);
+    void SendUserDataToServer(QJsonObject userData);
     quint16 nextBlockSize;
 
     QJsonDocument doc;
     QJsonParseError docError;
     QString globPath;
     Authorization *auth;
-
+    QJsonObject user;
 public slots:
     void slotReadyRead();
-    void authslot();
+    void authslot(QJsonObject userData);
 signals:
     void authsignal();
     void authslotChanged();

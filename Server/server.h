@@ -20,11 +20,13 @@ public:
     QTcpSocket *socket;
 private:
     QVector <QTcpSocket*> Sockets;
+    int Counter = 0;
     QByteArray Data;
     void SendToClient(QString str);
     quint16 nextBlockSize;
     QSqlDatabase db;
-    bool Authorization(QSqlDatabase db, QString username);
+    bool Authorization(QString username);
+    void WriteUserInfoToDB(QJsonObject user);
 public slots:
     void incomingConnection(qintptr socketDescriptor);
     void slotReadyRead();

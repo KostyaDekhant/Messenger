@@ -12,21 +12,21 @@ Server::Server()
     }
     nextBlockSize = 0;
     db = QSqlDatabase::addDatabase("QSQLITE", "SQLITE");
-    db.setDatabaseName("C:/qt projects/users.db"); //C:/qt projects/
+    db.setDatabaseName("./../users.db"); //C:/qt projects/
     if(db.open())
     {
         qDebug() << "База данных подключена успешно.";
-        //bool flag = Authorization(db, "lol", );
+        //bool flag = Authorization("lol1");
     }
     else
     {
         qDebug() << "Что-то пошло не так: " << db.lastError();
     }
 
-    db.close();
+    //db.close();
 }
 
-bool Server::Authorization(QSqlDatabase db, QString username) //, QString password)
+bool Server::Authorization(QString username) //, QString password)
 {
     QSqlQuery query(db);
     query.prepare("SELECT name FROM user WHERE user.name LIKE ?");
@@ -35,6 +35,7 @@ bool Server::Authorization(QSqlDatabase db, QString username) //, QString passwo
         if(query.next())
         {
             qDebug() << username << " есть в базе данных";
+
             return true;
         }
         else
@@ -54,6 +55,7 @@ bool Server::Authorization(QSqlDatabase db, QString username) //, QString passwo
     else {
         qDebug() << "Error executing query: " << query.lastError().text();
     }*/
+    //delete query;
     return false;
 }
 
@@ -64,9 +66,31 @@ void Server::incomingConnection(qintptr socketDescriptor)
     socket->setSocketDescriptor(socketDescriptor);
     connect(socket, &QTcpSocket::readyRead, this, &Server::slotReadyRead);
     connect(socket, &QTcpSocket::disconnected, socket, &QTcpSocket::deleteLater);
-
-    Sockets.push_back(socket);
+    //QString descrip = socketDescriptor;
+    Sockets.push_back(socket); //Сделать для сокетов имена, к примеру в list или map
     qDebug() << "client connected " << socketDescriptor;
+    Counter++;
+}
+
+//bool flag = Authorization("lol");
+
+void Server::WriteUserInfoToDB(QJsonObject user)
+{
+    QSqlQuery query(db);
+    //bool flag = Authorization("lol");
+    query.prepare("INSERT INTO user (pk_user, name, is_online, password) VALUES (:pk_user, :name, :is_online, :password)"); //:pk_user,
+    query.bindValue(":pk_user", Counter+10);
+    query.bindValue(":name", user.value("username"));
+    query.bindValue(":is_online", 1);
+    query.bindValue(":password", user.value("password"));
+    //
+    if (query.exec())
+        qDebug() << "Ну типа да";
+    else {
+        qDebug() << "Error executing query: " << query.lastError().text();
+    }
+
+    //delete query;
 }
 
 void Server::slotReadyRead()
@@ -100,11 +124,39 @@ void Server::slotReadyRead()
                 break;
             }
             QString str;
+            QJsonObject user;
             QTime time;
-            in >> time >> str;
+            //проверка типа
+            QString type = "tak";
+            in >> type;
+            qDebug() << "Тип сообщения: " << type;
+            if(type == "message")
+            {
+                in >> time >> str;
+                qDebug() << str;
+                //nextBlockSize = 0;
+                SendToClient(str);
+            }
+            else if(type == "userinfo")
+            {
+                in >> user;
+                //проверка на существование
+                if(!Authorization(user.value("username").toString()))
+                {
+                    WriteUserInfoToDB(user);
+                    qDebug() << "Добавлен: " << user;
+                }
+                else
+                    qDebug() << "Пользователь не добавлен";
+                //nextBlockSize = 0;
+            }
+            else
+            {
+                qDebug() << "Неизвестный тип данных: " << type;
+            }
             nextBlockSize = 0;
-            qDebug() << str;
-            SendToClient(str);
+
+
             break;
         }
     }

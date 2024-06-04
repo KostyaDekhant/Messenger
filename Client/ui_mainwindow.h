@@ -32,7 +32,7 @@ public:
     QGridLayout *gridLayout_3;
     QFrame *frame_2;
     QGridLayout *gridLayout;
-    QPushButton *pushButton_3;
+    QPushButton *Auth_bttn;
     QFrame *frame_3;
     QFrame *frame;
     QGridLayout *gridLayout_2;
@@ -59,10 +59,10 @@ public:
         frame_2->setFrameShadow(QFrame::Raised);
         gridLayout = new QGridLayout(frame_2);
         gridLayout->setObjectName("gridLayout");
-        pushButton_3 = new QPushButton(frame_2);
-        pushButton_3->setObjectName("pushButton_3");
+        Auth_bttn = new QPushButton(frame_2);
+        Auth_bttn->setObjectName("Auth_bttn");
 
-        gridLayout->addWidget(pushButton_3, 0, 0, 1, 1);
+        gridLayout->addWidget(Auth_bttn, 0, 0, 1, 1);
 
         frame_3 = new QFrame(frame_2);
         frame_3->setObjectName("frame_3");
@@ -124,7 +124,7 @@ public:
     void retranslateUi(QMainWindow *MainWindow)
     {
         MainWindow->setWindowTitle(QCoreApplication::translate("MainWindow", "MainWindow", nullptr));
-        pushButton_3->setText(QCoreApplication::translate("MainWindow", "\320\220\320\262\321\202\320\276\321\200\320\270\320\267\320\260\321\206\320\270\321\217", nullptr));
+        Auth_bttn->setText(QCoreApplication::translate("MainWindow", "\320\220\320\262\321\202\320\276\321\200\320\270\320\267\320\260\321\206\320\270\321\217", nullptr));
         pushButton->setText(QCoreApplication::translate("MainWindow", "Connect", nullptr));
         pushButton_2->setText(QCoreApplication::translate("MainWindow", ">", nullptr));
         menu->setTitle(QCoreApplication::translate("MainWindow", "\320\232\320\273\320\270\320\265\320\275\321\202", nullptr));
