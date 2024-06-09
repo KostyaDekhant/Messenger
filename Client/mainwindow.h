@@ -15,6 +15,9 @@
 #include <QStandardItem>
 
 
+#include <QScrollBar>
+
+
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
@@ -36,17 +39,17 @@ private slots:
 
     void on_lineEdit_returnPressed();
 
-    void on_pushButton_3_clicked();
-
     void on_Auth_bttn_clicked();
 
 private:
     Ui::MainWindow *ui;
     QTcpSocket *socket;
     QByteArray Data;
+    quint16 nextBlockSize;
+    int descriptor;
+
     void SendToServer(QString str);
     void SendUserDataToServer(QJsonObject userData);
-    quint16 nextBlockSize;
 
     QJsonDocument doc;
     QJsonParseError docError;
@@ -56,8 +59,11 @@ private:
 public slots:
     void slotReadyRead();
     void authslot(QJsonObject userData);
+    //void SendSocketToServer();
+    //void ClientDisconnected(QTcpSocket socket);
 signals:
     void authsignal();
     void authslotChanged();
+
 };
 #endif // MAINWINDOW_H

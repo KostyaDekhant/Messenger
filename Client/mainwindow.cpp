@@ -13,7 +13,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     socket = new QTcpSocket(this);
     connect(socket, &QTcpSocket::readyRead, this, &MainWindow::slotReadyRead);
+    //connect(socket, &QTcpSocket::disconnected,  this, &MainWindow::SendSocketToServer)
     connect(socket, &QTcpSocket::disconnected, socket, &QTcpSocket::deleteLater);
+
     nextBlockSize = 0;
 }
 
@@ -34,11 +36,10 @@ void MainWindow::SendToServer(QString str)
     QDataStream out(&Data, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_6_7);
     QString msg_type = "message";
-    out << quint16(0) << msg_type << QTime::currentTime() << str;
+    out << quint16(0) << msg_type << QTime::currentTime() << str << user.value("descrip").toInt();
     out.device()->seek(0);
     out << quint16(Data.size() - sizeof(quint16));
     socket->write(Data);
-    //qDebug() << Data;
     ui->lineEdit->clear();
 }
 
@@ -52,8 +53,6 @@ void MainWindow::SendUserDataToServer(QJsonObject userData)
     out.device()->seek(0);
     out << quint16(Data.size() - sizeof(quint16));
     socket->write(Data);
-    //qDebug() << "Инфа о пользователе: " << userData;
-    //ui->lineEdit->clear();
 }
 
 
@@ -63,9 +62,6 @@ void MainWindow::slotReadyRead()
     in.setVersion(QDataStream::Qt_6_7);
     if(in.status() == QDataStream::Ok)
     {
-        /*QString str;
-        in >> str;
-        ui->textBrowser->append(str);*/
         while(true)
         {
             if(nextBlockSize == 0)
@@ -80,11 +76,38 @@ void MainWindow::slotReadyRead()
             {
                 break;
             }
-            QString str;
+            QString str, sender_name;
             QTime time;
-            in >> time >> str;
+            QString type = "";
+            in >> type;
+            if(type == "message")
+            {
+                in >> time >> str >> sender_name;
+                QString full_msg;
+                qDebug() << sender_name << " " << user["username"].toString();
+                if(sender_name != user["username"].toString()) //левая сторона, чужие смс
+                {
+                    full_msg = time.toString()+ " " + sender_name + ": " + str;
+                    ui->textBrowser->insertHtml("<br><p style=\"text-align:left;\"><font size=\"5\"><b>" + str + "</b></font></p>"
+                                                "<p style=\"text-align:left;\"><font size=\"1\">" + time.toString() + "</font></p>");
+
+                }
+                else //правая сторона, свои смс
+                {
+                    full_msg = str + " ";
+
+                    ui->textBrowser->insertHtml(
+                                                "<br><p style=\"text-align:right;\"><font size=\"5\"><b>" + str + "</b></font></p>"
+                                                "<p style=\"text-align:right;\"><font size=\"1\">" + time.toString() + "</font></p>");
+                }
+                ui->textBrowser->verticalScrollBar()->setValue(ui->textBrowser->verticalScrollBar()->maximum());
+            }
+            else if (type == "descrip")
+            {
+                in >> descriptor;
+            }
             nextBlockSize = 0;
-            ui->textBrowser->append(time.toString() + " " + str);
+
         }
     }
     else
@@ -96,10 +119,11 @@ void MainWindow::slotReadyRead()
 void MainWindow::authslot(QJsonObject userData)
 {
     auth->close();
+    userData["descrip"] = descriptor;
     SendUserDataToServer(userData);
     user = userData;
     ui->Auth_bttn->setEnabled(false);
-    //qDebug() << "Инфа о пользователе: " << userData;
+    this->setWindowTitle(user["username"].toString());
     this->show();
 }
 
@@ -114,13 +138,6 @@ void MainWindow::on_lineEdit_returnPressed()
 {
     SendToServer(ui->lineEdit->text());
 }
-
-
-void MainWindow::on_pushButton_3_clicked()
-{
-
-}
-
 
 void MainWindow::on_Auth_bttn_clicked()
 {

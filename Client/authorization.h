@@ -1,6 +1,7 @@
 #ifndef AUTHORIZATION_H
 #define AUTHORIZATION_H
 
+#include <QTcpSocket>
 
 #include <QJsonObject>
 #include <QJsonArray>
@@ -28,12 +29,17 @@ public:
 private:
     Ui::Authorization *ui;
     QJsonObject userData;
+    bool successful_auth = true;
+    QTcpSocket *socket;
+    quint16 nextBlockSize = 0;
 signals:
     void authsignal(QJsonObject userData);
+    void dbsignal(QJsonObject userData);
 public slots:
+    void slotReadyRead();
     void authslot();
+    void dbslot();
 private slots:
-    void on_pushButton_clicked();
     void on_Login_bttn_clicked();
 };
 

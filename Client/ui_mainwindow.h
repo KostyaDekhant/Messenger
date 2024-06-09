@@ -36,10 +36,10 @@ public:
     QFrame *frame_3;
     QFrame *frame;
     QGridLayout *gridLayout_2;
-    QPushButton *pushButton;
-    QTextBrowser *textBrowser;
     QLineEdit *lineEdit;
+    QTextBrowser *textBrowser;
     QPushButton *pushButton_2;
+    QPushButton *pushButton;
     QMenuBar *menubar;
     QMenu *menu;
     QStatusBar *statusbar;
@@ -48,7 +48,7 @@ public:
     {
         if (MainWindow->objectName().isEmpty())
             MainWindow->setObjectName("MainWindow");
-        MainWindow->resize(773, 611);
+        MainWindow->resize(473, 440);
         centralwidget = new QWidget(MainWindow);
         centralwidget->setObjectName("centralwidget");
         gridLayout_3 = new QGridLayout(centralwidget);
@@ -80,25 +80,27 @@ public:
         frame->setFrameShadow(QFrame::Raised);
         gridLayout_2 = new QGridLayout(frame);
         gridLayout_2->setObjectName("gridLayout_2");
-        pushButton = new QPushButton(frame);
-        pushButton->setObjectName("pushButton");
-
-        gridLayout_2->addWidget(pushButton, 0, 0, 1, 2);
-
-        textBrowser = new QTextBrowser(frame);
-        textBrowser->setObjectName("textBrowser");
-
-        gridLayout_2->addWidget(textBrowser, 1, 0, 1, 2);
-
         lineEdit = new QLineEdit(frame);
         lineEdit->setObjectName("lineEdit");
 
         gridLayout_2->addWidget(lineEdit, 2, 0, 1, 1);
 
+        textBrowser = new QTextBrowser(frame);
+        textBrowser->setObjectName("textBrowser");
+        textBrowser->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        textBrowser->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+        gridLayout_2->addWidget(textBrowser, 1, 0, 1, 2);
+
         pushButton_2 = new QPushButton(frame);
         pushButton_2->setObjectName("pushButton_2");
 
         gridLayout_2->addWidget(pushButton_2, 2, 1, 1, 1);
+
+        pushButton = new QPushButton(frame);
+        pushButton->setObjectName("pushButton");
+
+        gridLayout_2->addWidget(pushButton, 0, 0, 1, 2);
 
 
         gridLayout_3->addWidget(frame, 0, 1, 1, 1);
@@ -106,9 +108,10 @@ public:
         MainWindow->setCentralWidget(centralwidget);
         menubar = new QMenuBar(MainWindow);
         menubar->setObjectName("menubar");
-        menubar->setGeometry(QRect(0, 0, 773, 25));
+        menubar->setGeometry(QRect(0, 0, 473, 25));
         menu = new QMenu(menubar);
         menu->setObjectName("menu");
+        menu->setTearOffEnabled(true);
         MainWindow->setMenuBar(menubar);
         statusbar = new QStatusBar(MainWindow);
         statusbar->setObjectName("statusbar");
@@ -125,9 +128,9 @@ public:
     {
         MainWindow->setWindowTitle(QCoreApplication::translate("MainWindow", "MainWindow", nullptr));
         Auth_bttn->setText(QCoreApplication::translate("MainWindow", "\320\220\320\262\321\202\320\276\321\200\320\270\320\267\320\260\321\206\320\270\321\217", nullptr));
-        pushButton->setText(QCoreApplication::translate("MainWindow", "Connect", nullptr));
         pushButton_2->setText(QCoreApplication::translate("MainWindow", ">", nullptr));
-        menu->setTitle(QCoreApplication::translate("MainWindow", "\320\232\320\273\320\270\320\265\320\275\321\202", nullptr));
+        pushButton->setText(QCoreApplication::translate("MainWindow", "Connect", nullptr));
+        menu->setTitle(QString());
     } // retranslateUi
 
 };

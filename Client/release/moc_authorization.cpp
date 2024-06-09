@@ -39,8 +39,10 @@ constexpr auto qt_meta_stringdata_CLASSAuthorizationENDCLASS = QtMocHelpers::str
     "authsignal",
     "",
     "userData",
+    "dbsignal",
+    "slotReadyRead",
     "authslot",
-    "on_pushButton_clicked",
+    "dbslot",
     "on_Login_bttn_clicked"
 );
 #else  // !QT_MOC_HAS_STRINGDATA
@@ -54,25 +56,29 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSAuthorizationENDCLASS[] = {
       12,       // revision
        0,       // classname
        0,    0, // classinfo
-       4,   14, // methods
+       6,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
        0,       // flags
-       1,       // signalCount
+       2,       // signalCount
 
  // signals: name, argc, parameters, tag, flags, initial metatype offsets
-       1,    1,   38,    2, 0x06,    1 /* Public */,
+       1,    1,   50,    2, 0x06,    1 /* Public */,
+       4,    1,   53,    2, 0x06,    3 /* Public */,
 
  // slots: name, argc, parameters, tag, flags, initial metatype offsets
-       4,    0,   41,    2, 0x0a,    3 /* Public */,
-       5,    0,   42,    2, 0x08,    4 /* Private */,
-       6,    0,   43,    2, 0x08,    5 /* Private */,
+       5,    0,   56,    2, 0x0a,    5 /* Public */,
+       6,    0,   57,    2, 0x0a,    6 /* Public */,
+       7,    0,   58,    2, 0x0a,    7 /* Public */,
+       8,    0,   59,    2, 0x08,    8 /* Private */,
 
  // signals: parameters
     QMetaType::Void, QMetaType::QJsonObject,    3,
+    QMetaType::Void, QMetaType::QJsonObject,    3,
 
  // slots: parameters
+    QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
@@ -92,9 +98,14 @@ Q_CONSTINIT const QMetaObject Authorization::staticMetaObject = { {
         // method 'authsignal'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         QtPrivate::TypeAndForceComplete<QJsonObject, std::false_type>,
+        // method 'dbsignal'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        QtPrivate::TypeAndForceComplete<QJsonObject, std::false_type>,
+        // method 'slotReadyRead'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'authslot'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
-        // method 'on_pushButton_clicked'
+        // method 'dbslot'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'on_Login_bttn_clicked'
         QtPrivate::TypeAndForceComplete<void, std::false_type>
@@ -109,9 +120,11 @@ void Authorization::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _i
         (void)_t;
         switch (_id) {
         case 0: _t->authsignal((*reinterpret_cast< std::add_pointer_t<QJsonObject>>(_a[1]))); break;
-        case 1: _t->authslot(); break;
-        case 2: _t->on_pushButton_clicked(); break;
-        case 3: _t->on_Login_bttn_clicked(); break;
+        case 1: _t->dbsignal((*reinterpret_cast< std::add_pointer_t<QJsonObject>>(_a[1]))); break;
+        case 2: _t->slotReadyRead(); break;
+        case 3: _t->authslot(); break;
+        case 4: _t->dbslot(); break;
+        case 5: _t->on_Login_bttn_clicked(); break;
         default: ;
         }
     } else if (_c == QMetaObject::IndexOfMethod) {
@@ -120,6 +133,13 @@ void Authorization::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _i
             using _t = void (Authorization::*)(QJsonObject );
             if (_t _q_method = &Authorization::authsignal; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
                 *result = 0;
+                return;
+            }
+        }
+        {
+            using _t = void (Authorization::*)(QJsonObject );
+            if (_t _q_method = &Authorization::dbsignal; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
+                *result = 1;
                 return;
             }
         }
@@ -145,13 +165,13 @@ int Authorization::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 4)
+        if (_id < 6)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 4;
+        _id -= 6;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 4)
+        if (_id < 6)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 4;
+        _id -= 6;
     }
     return _id;
 }
@@ -161,5 +181,12 @@ void Authorization::authsignal(QJsonObject _t1)
 {
     void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))) };
     QMetaObject::activate(this, &staticMetaObject, 0, _a);
+}
+
+// SIGNAL 1
+void Authorization::dbsignal(QJsonObject _t1)
+{
+    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))) };
+    QMetaObject::activate(this, &staticMetaObject, 1, _a);
 }
 QT_WARNING_POP
