@@ -41,7 +41,7 @@ constexpr auto qt_meta_stringdata_CLASSMainWindowENDCLASS = QtMocHelpers::string
     "isSuccess",
     "signupsignal",
     "authslotChanged",
-    "on_pushButton_clicked",
+    "on_connectBttn_clicked",
     "on_pushButton_2_clicked",
     "on_lineEdit_returnPressed",
     "on_Auth_bttn_clicked",
@@ -122,7 +122,7 @@ Q_CONSTINIT const QMetaObject MainWindow::staticMetaObject = { {
         QtPrivate::TypeAndForceComplete<bool, std::false_type>,
         // method 'authslotChanged'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
-        // method 'on_pushButton_clicked'
+        // method 'on_connectBttn_clicked'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'on_pushButton_2_clicked'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
@@ -155,7 +155,7 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 0: _t->authsignal((*reinterpret_cast< std::add_pointer_t<bool>>(_a[1]))); break;
         case 1: _t->signupsignal((*reinterpret_cast< std::add_pointer_t<bool>>(_a[1]))); break;
         case 2: _t->authslotChanged(); break;
-        case 3: _t->on_pushButton_clicked(); break;
+        case 3: _t->on_connectBttn_clicked(); break;
         case 4: _t->on_pushButton_2_clicked(); break;
         case 5: _t->on_lineEdit_returnPressed(); break;
         case 6: _t->on_Auth_bttn_clicked(); break;

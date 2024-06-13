@@ -20,6 +20,8 @@
 
 #include <QSqlRecord>
 
+#include <QJsonArray>
+
 
 class Server : public QTcpServer
 {
@@ -28,7 +30,6 @@ public:
     Server();
     QTcpSocket *socket;
 private:
-    //QVector <QTcpSocket*> Sockets;
     QMap <QString, QTcpSocket*> Sockets;
     quint16 nextBlockSize;
     QSqlDatabase db;
@@ -36,15 +37,12 @@ private:
     QByteArray Data;
 
     template<typename T>
-    void SendToClient(T arg, QTcpSocket* user);
-    void ConfMessage(QJsonValue jVal);
+    void SendToClient(T arg, QTcpSocket* user = nullptr);
+    void ConfMessage(QJsonObject message);
+    void SendSignalToUpdateDialog(QJsonObject message);
+    void AcceptReqForDialogs(int chatID);
 
-
-    void SendDescripToClient(int desctip);
-    void SendOtherToClient(QString str, int index);
-    void SendOnlineUsers(QStringList stringList);
-    void SendToAuth();
-
+    int findOrCreateChatId(const QString& user1, const QString& user2);
 
     bool Validlogin(QString username);
     bool CheckAuth(QJsonObject user);
@@ -59,10 +57,6 @@ private:
     int GetDBIdClient(QString username);
 
     void TypeMessageDetect(QString str);
-
-
-    //void DeleteSocket(QTcpSocket *Socket);
-    //QMap<int, QString> users;
 public slots:
     void incomingConnection(qintptr socketDescriptor);
     void slotReadyRead();

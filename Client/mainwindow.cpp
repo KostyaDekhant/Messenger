@@ -28,7 +28,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     nextBlockSize = 0;
 
-    ui->pushButton->click();
+    ui->connectBttn->click();
 }
 
 
@@ -38,19 +38,20 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::on_pushButton_clicked()
+//Установка соединения с сервером
+void MainWindow::on_connectBttn_clicked()
 {
-    //socket->connectToHost("127.0.0.1", 2323);
     socket->connectToHost("192.168.0.11", 27015);
 
     if(!socket->waitForConnected(5000)) { // ждем соединения в течение 5 секунд
         QMessageBox::information(nullptr, "Внимание!", "Ошибка при подключении к серверу! \nКод ошибки: " + socket->errorString());
     } else {
         qDebug() << "Успешное подключение к серверу";
-        ui->pushButton->setEnabled(false);
+        ui->connectBttn->setEnabled(false);
     }
 }
 
+//Отправка сообщений на сервер
 template<typename T>
 void MainWindow::SendToServer(T arg)
 {
@@ -64,6 +65,7 @@ void MainWindow::SendToServer(T arg)
     ui->lineEdit->clear();
 }
 
+//Тип сообщения
 void MainWindow::TypeMessageDetect(QString str)
 {
     QJsonDocument jDoc = QJsonDocument::fromJson(str.toUtf8());
@@ -73,48 +75,37 @@ void MainWindow::TypeMessageDetect(QString str)
 
     if(type == "message")
     {
-        //in >> time >> str >> sender_name;
-        //QString full_msg;
+        QJsonObject temp = jObj["value"].toObject();
+        QString time = temp["time"].toString(),
+                sender =  temp["sender"].toString(),
+                text = temp["text"].toString();
 
-        //qDebug() << user["username"].toString();
-        qDebug() << jObj["sender"].toString() << ": " << jObj["value"].toString();
-        return;
-
-        /*
-        if(sender_name != user["username"].toString()) //левая сторона, чужие смс
+        if(sender.toInt() != (user["id"].toInt())) //левая сторона, чужие смс
         {
-            full_msg = time.toString()+ " " + sender_name + ": " + str;
-            ui->textBrowser->insertHtml("<br><p style=\"text-align:left;\"><font size=\"5\"><b>" + str + "</b></font></p>"
-                                                                                                         "<p style=\"text-align:left;\"><font size=\"1\">" + time.toString() + "</font></p>");
-
+            ui->textBrowser->insertHtml("<br><p style=\"text-align:left;\"><font size=\"5\"><b>" + text + "</b></font></p>"
+                                        "<p style=\"text-align:left;\"><font size=\"1\">" + time + "</font></p>");
         }
+
         else //правая сторона, свои смс
         {
-            full_msg = str + " ";
+            //full_msg = str + " ";
 
             ui->textBrowser->insertHtml(
-                "<br><p style=\"text-align:right;\"><font size=\"5\"><b>" + str + "</b></font></p>"
-                                                                                  "<p style=\"text-align:right;\"><font size=\"1\">" + time.toString() + "</font></p>");
+                "<br><p style=\"text-align:right;\"><font size=\"5\"><b>" + text + "</b></font></p>"
+                "<p style=\"text-align:right;\"><font size=\"1\">" + time + "</font></p>");
         }
         ui->textBrowser->verticalScrollBar()->setValue(ui->textBrowser->verticalScrollBar()->maximum());
-        */
-
-
-    }
-    else if (type == "descrip")
-    {
-        //in >> descriptor;
     }
     else if (type == "who's_online")
     {
-        /*
-        in >> stringList;
-        OnlineIcons(stringList);*/
+        OnlineIcons(jObj["value"].toArray());
     }
     else if (type == "auth")
     {
         bool status = jObj["value"].toBool();
-        qDebug() << status;
+
+        user.insert("id", jObj["id"].toInt());
+        qDebug() <<  user;
         emit authsignal(status);
         if(status)
         {
@@ -128,12 +119,15 @@ void MainWindow::TypeMessageDetect(QString str)
             QJsonObject temp;
             user = temp;
         }
-        //in >> descriptor;
     }
     else if (type == "signup")
     {
         bool status = jObj["value"].toBool();
-        qDebug() << status;
+
+        user.insert("id", jObj["id"].toInt());
+
+        qDebug() <<  user;
+
         emit signupsignal(status);
         if(status)
         {
@@ -148,27 +142,51 @@ void MainWindow::TypeMessageDetect(QString str)
             user = temp;
         }
     }
+    else if(type == "load_dialog")
+    {
+        currentChat = jObj["id_chat"].toInt();
+        AcceptMessResponse(jObj["value"]);
+    }
     else
     {
         qDebug() << "Неизвестный тип данных: " << type;
     }
 }
 
-
-//убрать
-void MainWindow::SendUserDataToServer(QJsonObject userData)
+//Вывод сообщений на экран
+void MainWindow::AcceptMessResponse(QJsonValue value)
 {
-    Data.clear();
-    QDataStream out(&Data, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_6_7);
-    QString msg_type = "userinfo";
-    out << quint16(0) << msg_type << userData;
-    out.device()->seek(0);
-    out << quint16(Data.size() - sizeof(quint16));
-    socket->write(Data);
+    ui->textBrowser->clear();
+    QJsonArray jArray = value.toArray();
+    if (!jArray.size()) {
+        ui->textBrowser->append("Начало диалога!");
+        return;
+    }
+    foreach (const QJsonValue& it, jArray) {
+        //QJsonObject temp = jObj["value"].toObject();
+
+        QString time = it["time"].toString(),
+            sender =  it["sender"].toString(),
+            text = it["text"].toString();
+
+        if(sender != (user["username"].toString())) //левая сторона, чужие смс
+        {
+            ui->textBrowser->insertHtml("<br><p style=\"text-align:left;\"><font size=\"5\"><b>" + text + "</b></font></p>"
+                                        "<p style=\"text-align:left;\"><font size=\"1\">" + time + "</font></p>");
+        }
+
+        else //правая сторона, свои смс
+        {
+            ui->textBrowser->insertHtml(
+                "<br><p style=\"text-align:right;\"><font size=\"5\"><b>" + text + "</b></font></p>"
+                "<p style=\"text-align:right;\"><font size=\"1\">" + time + "</font></p>");
+        }
+        ui->textBrowser->verticalScrollBar()->setValue(ui->textBrowser->verticalScrollBar()->maximum());
+    }
+
 }
 
-
+//Приёмка сообщений с сервера
 void MainWindow::slotReadyRead()
 {
     QDataStream in(socket);
@@ -202,36 +220,47 @@ void MainWindow::slotReadyRead()
     }
 }
 
+//Нажатие на чат
 void MainWindow::onButtonClicked()
 {
     QPushButton* button = qobject_cast<QPushButton*>(sender());
     //SendToServer(button->text());
-    ui->textBrowser->clear();
 
+    QJsonObject jObj;
+    jObj.insert("type", "open_chat");
+
+    QJsonObject users;
+
+    users.insert("sender", user["username"].toString());
+    users.insert("recipient", button->text());
+
+    jObj.insert("value", users);
+
+    QJsonDocument jDoc = QJsonDocument(jObj);
+    QString jStr = QString(jDoc.toJson());
+
+    SendToServer(jStr);
+
+    ui->textBrowser->clear();
 }
 
-void MainWindow::OnlineIcons(QStringList stringList)
+//Вывод пользователей, которые онлайн
+void MainWindow::OnlineIcons(QJsonArray stringList)
 {
-
-    //buttonList = new QList<QPushButton*>();
-
-
-    //scrollArea.show();
-    int sizelist = stringList.size();
-
-    if(sizelist == buttonList.size())
-        return;
-
     bool add_flag = false;
-    for(int i = 0; i < stringList.size(); i++) //stringList.size()
-    {
-        if(stringList[i] == user["username"].toString())
+
+
+    for(int i = 0; i < stringList.size(); i++) {
+        QJsonValue jsonValue = stringList.at(i);
+
+        qDebug() << i << " " << jsonValue.toString() ;
+        if(jsonValue.toString() == user["username"].toString())
             continue;
 
         bool flag = false;
         for(QPushButton* bttn : buttonList)
         {
-            if(bttn->text() == stringList[i])
+            if(bttn->text() == jsonValue.toString())
             {
                 flag = true;
                 break;
@@ -240,7 +269,7 @@ void MainWindow::OnlineIcons(QStringList stringList)
         if(flag)
             continue;
 
-        QPushButton* button = new QPushButton(stringList[i]);
+        QPushButton* button = new QPushButton(jsonValue.toString());
         button->setFixedSize(ui->scrollArea->viewport()->size().width()-18, 40);
         user_layout->addWidget(button);
         buttonList.append(button);
@@ -251,8 +280,6 @@ void MainWindow::OnlineIcons(QStringList stringList)
     }
 
     ui->scrollArea->setWidgetResizable(true);
-    //ui->scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-
 
     if(add_flag)
     {
@@ -262,7 +289,7 @@ void MainWindow::OnlineIcons(QStringList stringList)
         qDebug() << "кнопка не добавлена ";
 }
 
-
+//Данные о пользователе с окна авторизации
 void MainWindow::auth_slot(QJsonObject userData)
 {
     userData["descrip"] = descriptor;
@@ -271,7 +298,6 @@ void MainWindow::auth_slot(QJsonObject userData)
     QJsonObject jObj;
     jObj.insert("type", "auth");
     jObj.insert("value", userData);
-    //SendUserDataToServer(userData);
 
     QJsonDocument jDoc = QJsonDocument(jObj);
     QString jStr = QString(jDoc.toJson());
@@ -279,6 +305,7 @@ void MainWindow::auth_slot(QJsonObject userData)
     SendToServer(jStr);
 }
 
+//Данные о пользователе с окна регистрации
 void MainWindow::signup_slot(QJsonObject userData)
 {
     userData["descrip"] = descriptor;
@@ -287,7 +314,6 @@ void MainWindow::signup_slot(QJsonObject userData)
     QJsonObject jObj;
     jObj.insert("type", "signup");
     jObj.insert("value", userData);
-    //SendUserDataToServer(userData);
 
     QJsonDocument jDoc = QJsonDocument(jObj);
     QString jStr = QString(jDoc.toJson());
@@ -295,22 +321,9 @@ void MainWindow::signup_slot(QJsonObject userData)
     SendToServer(jStr);
 }
 
-
-void MainWindow::on_pushButton_2_clicked()
+//отправка сообщений на кнопку
+void MainWindow::on_send_msg_bttn_clicked()
 {
-    if (currentChat == -1) return;
-
-
-
-
-    //SendToServer(ui->lineEdit->text());
-}
-
-
-void MainWindow::on_lineEdit_returnPressed()
-{
-    //SendToServer(ui->lineEdit->text());
-
     if (currentChat == -1) return;
 
     QJsonObject jResObj, mess;
@@ -324,6 +337,23 @@ void MainWindow::on_lineEdit_returnPressed()
     SendToServer(jReqStr);
 }
 
+//при нажатии на Enter отправка сообщений
+void MainWindow::on_lineEdit_returnPressed()
+{
+    if (currentChat == -1) return;
+
+    QJsonObject jResObj, mess;
+    jResObj.insert("type", "message");
+    mess.insert("sender", this->user["username"]);
+    mess.insert("pk_chat", this->currentChat);
+    mess.insert("text", ui->lineEdit->text());
+    jResObj.insert("value", mess);
+    QJsonDocument jReqDoc = QJsonDocument{jResObj};
+    QString jReqStr = QString(jReqDoc.toJson());
+    SendToServer(jReqStr);
+}
+
+//Сигнал от окна авторизации для его закрытия и открытия основного окна
 void MainWindow::on_Auth_bttn_clicked()
 {
     this->hide();
@@ -331,7 +361,7 @@ void MainWindow::on_Auth_bttn_clicked()
     //emit authsignal();
 }
 
-
+//Создание чата
 void MainWindow::on_addChat_clicked()
 {
     QString chat_name = ui->username_lb->text();

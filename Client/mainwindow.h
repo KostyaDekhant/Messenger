@@ -36,9 +36,9 @@ public:
     ~MainWindow();
 
 private slots:
-    void on_pushButton_clicked();
+    void on_connectBttn_clicked();
 
-    void on_pushButton_2_clicked();
+    void on_send_msg_bttn_clicked();
 
     void on_lineEdit_returnPressed();
 
@@ -52,7 +52,7 @@ private:
     QByteArray Data;
     quint16 nextBlockSize;
     int descriptor;
-    int currentChat = 1;//-1
+    int currentChat = -1;//-1
 
 
     QWidget *user_widget;
@@ -62,9 +62,10 @@ private:
 
     template<typename T>
     void SendToServer(T arg);
-    void SendUserDataToServer(QJsonObject userData);
-    void OnlineIcons(QStringList stringList);
 
+    void OnlineIcons(QJsonArray stringList);
+
+    void AcceptMessResponse(QJsonValue value);
 
     void TypeMessageDetect(QString str);
 
@@ -79,8 +80,6 @@ public slots:
     void signup_slot(QJsonObject userData);
     void onButtonClicked();
 
-    //void SendSocketToServer();
-    //void ClientDisconnected(QTcpSocket socket);
 signals:
     void authsignal(bool isSuccess);
     void signupsignal(bool isSuccess);

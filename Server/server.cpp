@@ -37,9 +37,9 @@ Server::Server()
 
 
     QTimer *timer = new QTimer();
-    connect(timer, &QTimer::timeout, this, &Server::CheckSocketStatus);
+    //connect(timer, &QTimer::timeout, this, &Server::CheckSocketStatus);
     connect(timer, &QTimer::timeout, this, &Server::SendOnlineUsersToEverybody);
-    //timer->start(2000);
+    timer->start(2000);
     //db.close();
 }
 
@@ -50,17 +50,7 @@ void Server::incomingConnection(qintptr socketDescriptor)
     connect(socket, &QTcpSocket::readyRead, this, &Server::slotReadyRead);
     connect(socket, &QTcpSocket::disconnected, this, &Server::slotDeleteLater);
 
-    //connect(socket, &QTcpSocket::disconnected, this, &QTcpSocket::deleteLater);
-    //QString descrip = socketDescriptor;
-    //Sockets.push_back(socket); //Сделать для сокетов имена, к примеру в list или map
-
     qDebug() << "client connected " << socketDescriptor;
-
-    /*Sockets.insert(,socket);
-    SendDescripToClient(socketDescriptor);
-    users[Counter++].descrip = socketDescriptor;*/
-
-    //Counter++;
 }
 
 void Server::slotDeleteLater()
@@ -71,7 +61,7 @@ void Server::slotDeleteLater()
     socket->deleteLater();
 }
 
-//возможно, беда с новыми пользователями, они чёт отключаются с ошибкой
+//Статус сокетов, уже вряд ли надо
 void Server::CheckSocketStatus()
 {
     /*
@@ -100,7 +90,7 @@ void Server::CheckSocketStatus()
     */
 }
 
-
+//Узнать статус пользователя
 bool Server::GetClientStatus(int index)
 {
     if(users[index].name == "")
@@ -118,6 +108,7 @@ bool Server::GetClientStatus(int index)
     return status == 1 ? true : false;
 }
 
+//Установить статус пользователя
 void Server::SetClientStatus(int index, int status)
 {
     QSqlQuery query(db);
@@ -135,6 +126,7 @@ void Server::SetClientStatus(int index, int status)
     }
 }
 
+//Максимальное значение pk_user
 int Server::MaxPKUser()
 {
     QSqlQuery query(db);
@@ -147,6 +139,7 @@ int Server::MaxPKUser()
     return max;
 }
 
+//Запись пользователя в бд при успешной регистрации
 void Server::WriteUserInfoToDB(QJsonObject user)
 {
     qDebug() << "Json file " << user;
@@ -157,7 +150,6 @@ void Server::WriteUserInfoToDB(QJsonObject user)
     query.bindValue(":name", user["username"].toString());
     query.bindValue(":is_online", 1);
     query.bindValue(":password", user["password"].toString());
-    //
     if (query.exec())
         qDebug() << "Добавление пользователя прошло успешно.";
     else {
@@ -179,7 +171,7 @@ int Server::GetIdClient(int descrip)
     return -1;
 }
 
-//Брать инфу с базы, узнаём айди пользователя с таким ником
+//индекс пользователя в бд
 int Server::GetDBIdClient(QString username)
 {
     int index = -1;
@@ -193,7 +185,7 @@ int Server::GetDBIdClient(QString username)
     return index;
 }
 
-
+//чтение данных
 void Server::slotReadyRead()
 {
     socket = (QTcpSocket*)sender();
@@ -224,15 +216,7 @@ void Server::slotReadyRead()
             in >> str;
 
             TypeMessageDetect(str);
-            /*
-
-
-            */
-
-
             nextBlockSize = 0;
-
-
             break;
         }
     }
@@ -242,7 +226,7 @@ void Server::slotReadyRead()
     }
 }
 
-
+//Определение типа сообщения
 void Server::TypeMessageDetect(QString str)
 {
     QJsonDocument jDoc = QJsonDocument::fromJson(str.toUtf8());
@@ -252,7 +236,7 @@ void Server::TypeMessageDetect(QString str)
 
     if(type == "message")
     {
-        ConfMessage(jObj["value"]);
+        ConfMessage(jObj["value"].toObject());
     }
     else if(type == "auth")
     {
@@ -275,15 +259,21 @@ void Server::TypeMessageDetect(QString str)
         {
             qDebug() << "Пользователь " << temp["username"].toString() << "ещё не зарегистрирован!";
         }
-
         QJsonObject temp_obj;
         temp_obj.insert("type", "auth");
         temp_obj.insert("value", flag);
-        qDebug() << temp_obj["value"].toBool();
 
+        if(flag)
+        {
+            int id = GetDBIdClient(temp["username"].toString());
+            qDebug() << "ID " << id;
+            temp_obj.insert("id", id);
+            Sockets.insert(temp["username"].toString(), socket); //Список пользователей
+        }
         QJsonDocument jDoc = QJsonDocument(temp_obj);
         QString jStr = QString(jDoc.toJson());
         SendToClient(jStr, socket);
+
         /*in >> user;
         qDebug() << user;
         //проверка на существование
@@ -342,11 +332,31 @@ void Server::TypeMessageDetect(QString str)
         QJsonObject temp_obj;
         temp_obj.insert("type", "signup");
         temp_obj.insert("value", flag);
+
+        if(flag)
+        {
+            int id = GetDBIdClient(temp["username"].toString());
+            qDebug() << "ID " << id;
+            temp_obj.insert("id", id);
+            Sockets.insert(temp["username"].toString(), socket);
+        }
+
         qDebug() << temp_obj["value"].toBool();
 
         QJsonDocument jDoc = QJsonDocument(temp_obj);
         QString jStr = QString(jDoc.toJson());
         SendToClient(jStr, socket);
+
+    }
+    else if (type == "open_chat")
+    {
+        QJsonObject temp = jObj["value"].toObject();
+
+
+        int id = findOrCreateChatId(temp["sender"].toString(), temp["recipient"].toString());
+        qDebug() << "Id чата: " << id;
+
+        AcceptReqForDialogs(id);
     }
     else
     {
@@ -354,7 +364,7 @@ void Server::TypeMessageDetect(QString str)
     }
 }
 
-
+//Авторизация
 bool Server::CheckAuth(QJsonObject user)
 {
 
@@ -374,7 +384,7 @@ bool Server::CheckAuth(QJsonObject user)
     return false;//не авториз
 }
 
-
+//Подтверждение логина (есть ли он в бд или нет)
 bool Server::Validlogin(QString username)
 {
     QSqlQuery query(db);
@@ -397,29 +407,185 @@ bool Server::Validlogin(QString username)
     return true;
 }
 
-void Server::ConfMessage(QJsonValue jVal)
+//Отправка и запись сообщений в бд
+void Server::ConfMessage(QJsonObject message)
 {
+    QSqlQuery query_chatp(db), query_mess(db);
+    //Выбор чата
+    query_chatp.prepare("SELECT 'chat_user'.rowid, 'chat_user'.'pk_chat', 'chat_user'.'pk_user' FROM 'user', 'chat_user', "
+                        "'chat' WHERE 'user'.'name' == :username AND 'chat_user'.'pk_user' == 'user'.'pk_user' "
+                        "AND 'chat_user'.'pk_chat' == 'chat'.'pk_chat' AND 'chat'.'pk_chat' == :chatID");
+    query_chatp.bindValue(":chatID", message["pk_chat"].toInt());
+    query_chatp.bindValue(":username", message["sender"].toString());
+    query_chatp.exec();
+
+    //Запись сообщения
+    query_mess.prepare("INSERT INTO 'messages' ('message', 'time', 'pk_user', 'pk_chat') VALUES (:message, CURRENT_TIMESTAMP, :user, :chat)");
+    query_mess.bindValue(":message", message["text"].toString());
+    QSqlRecord rec = query_chatp.record();
+
+    query_chatp.next();
+    query_mess.bindValue(":chat", query_chatp.value(rec.indexOf("pk_chat")).toInt());
+    query_mess.bindValue(":user", query_chatp.value(rec.indexOf("pk_user")).toInt());
+
+    if (query_mess.exec()) {
+        int id = query_chatp.lastInsertId().toInt();
+        QSqlQuery getmess(db);
+        getmess.prepare("SELECT 'messages'.'message', 'messages'.'time', 'messages'.'pk_user' FROM 'messages' "
+                        "JOIN 'user' ON 'messages'.'pk_user' == 'user'.'pk_user' WHERE 'messages'.rowid == :id");
+        getmess.bindValue(":id", id);
+        getmess.exec();
+
+        QSqlRecord mess = getmess.record();
+        getmess.next();
+
+        QJsonObject temp = message;
+
+        //Берём сообщение, отправителя и время
+        temp.insert("text", getmess.value(mess.indexOf("message")).toString());
+        temp.insert("time", getmess.value(mess.indexOf("time")).toString());
+        temp.insert("sender", getmess.value(mess.indexOf("pk_user")).toString());
+
+        qDebug() << "Сообщение записано в бд!";
+
+        SendSignalToUpdateDialog(temp);
+    }
+    else qDebug() << "Ошибка при сохранении сообщения! " << query_mess.lastError() << " " << query_mess.lastQuery();
 
 }
 
+//Отправка сигнала на обновление чата
+void Server::SendSignalToUpdateDialog(QJsonObject message)
+{
+    QJsonObject jResObj;
+    jResObj.insert("type", "message");
+    jResObj.insert("value", message);
 
-//убрать или переделать
+    //выбор пользователей чата
+    QSqlQuery chatp(db);
+    chatp.prepare("SELECT user.'name', 'user'.'pk_user' FROM 'user', 'chat_user' JOIN 'chat' ON 'chat_user'.'pk_chat' == 'chat'.'pk_chat' "
+                  "WHERE 'chat'.'pk_chat' == :chatID AND 'user'.'pk_user' == 'chat_user'.'pk_user'");
+    chatp.bindValue(":chatID", message["pk_chat"].toInt());
+    chatp.exec();
+    QSqlRecord rec = chatp.record();
+
+    //отправка сообщений участникам чата
+    while (chatp.next()) {
+        auto it = Sockets.value(chatp.value(rec.indexOf("name")).toString());
+        QJsonDocument jReqDoc = QJsonDocument{jResObj};
+        QString jReqStr = QString(jReqDoc.toJson());
+        SendToClient(jReqStr, it);
+    }
+}
+
+//Подтвердить отправку сообщений чата
+void Server::AcceptReqForDialogs(int chatID)
+{
+    QSqlQuery query(db);
+    //Берём сообщения указанного чата
+    query.prepare("SELECT DISTINCT messages.message, messages.time, user.name FROM user, "
+                  "messages JOIN chat ON messages.pk_chat = :chatId WHERE messages.pk_user == user.pk_user ORDER BY time ASC");
+    query.bindValue(":chatId", chatID);
+    if (query.exec()) qDebug() << "Successful get messages from DB!";
+    else {
+        qDebug() << "Error get messages from DB";
+        return;
+    }
+
+    QSqlRecord rec = query.record();
+    QJsonArray jArray;
+
+    //Добавление сообщений в массив Json
+    while(query.next()) {
+        QJsonObject temp;
+        temp.insert("time", query.value(rec.indexOf("time")).toString());
+        temp.insert("sender", query.value(rec.indexOf("name")).toString());
+        temp.insert("text", query.value(rec.indexOf("message")).toString());
+        jArray.append(temp);
+    }
+    QJsonObject jObj;
+    jObj.insert("type", "load_dialog");
+    jObj.insert("id_chat", chatID);
+    jObj.insert("value", jArray);
+
+    QJsonDocument jDoc = QJsonDocument{jObj};
+    QString jStr = QString(jDoc.toJson());
+
+    SendToClient(jStr);
+}
+
+//Поиск или создание нового чата
+int Server::findOrCreateChatId(const QString& user1, const QString& user2) {
+    QSqlQuery query(db);
+
+    // Проверяем наличие чата с данными пользователями
+    query.prepare("SELECT chat.pk_chat FROM chat "
+                  "JOIN chat_user ON chat.pk_chat = chat_user.pk_chat "
+                  "JOIN user ON chat_user.pk_user = user.pk_user "
+                  "WHERE user.name = :user1 AND chat.pk_chat IN "
+                  "(SELECT chat.pk_chat FROM chat JOIN chat_user ON chat.pk_chat = chat_user.pk_chat "
+                  "JOIN user ON chat_user.pk_user = user.pk_user "
+                  "WHERE user.name = :user2)");
+
+    query.bindValue(":user1", user1);
+    query.bindValue(":user2", user2);
+
+    if (query.exec() && query.next()) {
+        // Если чат уже существует, выводим его id
+        int chatId = query.value(0).toInt();
+        qDebug() << "Чат с пользователями " << user1 << " и " << user2 << " уже существует:" << chatId;
+        return chatId;
+    } else {
+        // Если чата нет, создаем новый чат
+        query.prepare("INSERT INTO chat (name, isPersonal) VALUES ('New Chat', 1)");
+        if (query.exec()) {
+            int newChatId = query.lastInsertId().toInt();
+
+            // Добавляем пользователей в новый чат
+            query.prepare("INSERT INTO chat_user (pk_chat, pk_user) "
+                          "SELECT :chatId, user.pk_user FROM user WHERE user.name IN (:user1, :user2)");
+            query.bindValue(":chatId", newChatId);
+            query.bindValue(":user1", user1);
+            query.bindValue(":user2", user2);
+
+            if (query.exec()) {
+                qDebug() << "Новый чат создан, пользователи: " << user1 << " и " << user2 << ", id:" << newChatId;
+                return newChatId;
+            }
+        }
+    }
+    return -1;
+}
+
 void Server::SendOnlineUsersToEverybody()
 {
-    /*int size_of_sockets = Sockets.size();
-
     QStringList stringlist;
-    for(int i = 0; i <  size_of_sockets; i++)
-    {
-        if(Sockets[i]->state() == QAbstractSocket::ConnectedState && users[i].name != "")
-            stringlist << users[i].name;
+    // обходим QMap и сохраняем ключи в список
+    QMapIterator<QString, QTcpSocket*> i(Sockets);
+    while (i.hasNext()) {
+        i.next();
+        stringlist.append(i.key());
     }
+
     if(!stringlist.size())
         return;
-    SendOnlineUsers(stringlist);
+
+    QJsonObject jObj;
+
+    QJsonArray jsonArray;
+    for (const QString &str : stringlist) {
+        jsonArray.append(str);
+    }
+
+    jObj.insert("type", "who's_online");
+    jObj.insert("value", jsonArray);
+    QJsonDocument jDoc = QJsonDocument{jObj};
+    QString jStr = QString(jDoc.toJson());
+
+    SendToClient(jStr);
     qDebug() << stringlist;
     qDebug() << "Список отправлен";
-    */
+
 }
 
 
@@ -434,75 +600,4 @@ void Server::SendToClient(T arg, QTcpSocket* user)
     out << quint16(Data.size() - sizeof(quint16));
     if (user == nullptr) user = this->socket;
     user->write(Data);
-}
-
-//три метода убрать тупо
-void Server::SendOtherToClient(QString str, int index)
-{
-    /*
-    Data.clear();
-    QDataStream out(&Data, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_6_7);
-    QString type = "message";
-    out << quint16(0) << type << QTime::currentTime() << str;
-    out.device()->seek(0);
-    out << quint16(Data.size() - sizeof(quint16));
-    int size_of_sockets = Sockets.size();
-    for(int i = 0; i < size_of_sockets; i++)
-    {
-        if(i != index && Sockets[i]->state() == QAbstractSocket::ConnectedState)
-            Sockets[i]->write(Data);
-    }*/
-}
-
-void Server::SendOnlineUsers(QStringList stringList)
-{
-    /*
-    Data.clear();
-    QDataStream out(&Data, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_6_7);
-    QString type = "who's_online";
-    out << quint16(0) << type << stringList;
-    out.device()->seek(0);
-    out << quint16(Data.size() - sizeof(quint16));
-    int size_of_sockets = Sockets.size();
-    for(int i = 0; i < size_of_sockets; i++)
-    {
-        if(Sockets[i]->state() == QAbstractSocket::ConnectedState && users[i].name != "")
-            Sockets[i]->write(Data);
-    }
-    */
-}
-
-void Server::SendDescripToClient(int desctip)
-{
-    /*
-    Data.clear();
-    QDataStream out(&Data, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_6_7);
-    QString type = "descrip";
-    out << quint16(0) << type << desctip;
-    out.device()->seek(0);
-    out << quint16(Data.size() - sizeof(quint16));
-    int size_of_sockets = Sockets.size();
-    for(int i = 0; i < size_of_sockets; i++)
-    {
-        if(Sockets[i]->state() == QAbstractSocket::ConnectedState)
-        {
-            //qDebug() << "if";
-            if(desctip == Sockets[i]->socketDescriptor())
-                Sockets[i]->write(Data);
-        }
-        else
-        {
-            //qDebug() << "else";
-        }
-    }
-    */
-}
-
-//убрать
-void Server::SendToAuth()
-{
-
 }

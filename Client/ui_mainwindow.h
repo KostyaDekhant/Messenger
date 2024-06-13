@@ -46,7 +46,7 @@ public:
     QFrame *frame;
     QGridLayout *gridLayout_2;
     QPushButton *pushButton_2;
-    QPushButton *pushButton;
+    QPushButton *connectBttn;
     QLineEdit *lineEdit;
     QTextBrowser *textBrowser;
     QMenuBar *menubar;
@@ -127,10 +127,10 @@ public:
 
         gridLayout_2->addWidget(pushButton_2, 2, 1, 1, 1);
 
-        pushButton = new QPushButton(frame);
-        pushButton->setObjectName("pushButton");
+        connectBttn = new QPushButton(frame);
+        connectBttn->setObjectName("connectBttn");
 
-        gridLayout_2->addWidget(pushButton, 0, 0, 1, 2);
+        gridLayout_2->addWidget(connectBttn, 0, 0, 1, 2);
 
         lineEdit = new QLineEdit(frame);
         lineEdit->setObjectName("lineEdit");
@@ -172,7 +172,7 @@ public:
         Auth_bttn->setText(QCoreApplication::translate("MainWindow", "\320\220\320\262\321\202\320\276\321\200\320\270\320\267\320\260\321\206\320\270\321\217", nullptr));
         addChat->setText(QCoreApplication::translate("MainWindow", "\320\241\320\276\320\267\320\264\320\260\321\202\321\214 \321\207\320\260\321\202", nullptr));
         pushButton_2->setText(QCoreApplication::translate("MainWindow", ">", nullptr));
-        pushButton->setText(QCoreApplication::translate("MainWindow", "Connect", nullptr));
+        connectBttn->setText(QCoreApplication::translate("MainWindow", "Connect", nullptr));
         menu->setTitle(QString());
     } // retranslateUi
 
