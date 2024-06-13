@@ -36,14 +36,16 @@ namespace {
 struct qt_meta_stringdata_CLASSAuthorizationENDCLASS_t {};
 constexpr auto qt_meta_stringdata_CLASSAuthorizationENDCLASS = QtMocHelpers::stringData(
     "Authorization",
-    "authsignal",
+    "auth_signal",
     "",
     "userData",
-    "dbsignal",
+    "signup_signal",
     "slotReadyRead",
     "authslot",
-    "dbslot",
-    "on_Login_bttn_clicked"
+    "success_slot",
+    "isSuccess",
+    "on_Login_bttn_clicked",
+    "on_sign_up_bttn_clicked"
 );
 #else  // !QT_MOC_HAS_STRINGDATA
 #error "qtmochelpers.h not found or too old."
@@ -56,7 +58,7 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSAuthorizationENDCLASS[] = {
       12,       // revision
        0,       // classname
        0,    0, // classinfo
-       6,   14, // methods
+       7,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -64,14 +66,15 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSAuthorizationENDCLASS[] = {
        2,       // signalCount
 
  // signals: name, argc, parameters, tag, flags, initial metatype offsets
-       1,    1,   50,    2, 0x06,    1 /* Public */,
-       4,    1,   53,    2, 0x06,    3 /* Public */,
+       1,    1,   56,    2, 0x06,    1 /* Public */,
+       4,    1,   59,    2, 0x06,    3 /* Public */,
 
  // slots: name, argc, parameters, tag, flags, initial metatype offsets
-       5,    0,   56,    2, 0x0a,    5 /* Public */,
-       6,    0,   57,    2, 0x0a,    6 /* Public */,
-       7,    0,   58,    2, 0x0a,    7 /* Public */,
-       8,    0,   59,    2, 0x08,    8 /* Private */,
+       5,    0,   62,    2, 0x0a,    5 /* Public */,
+       6,    0,   63,    2, 0x0a,    6 /* Public */,
+       7,    1,   64,    2, 0x0a,    7 /* Public */,
+       9,    0,   67,    2, 0x08,    9 /* Private */,
+      10,    0,   68,    2, 0x08,   10 /* Private */,
 
  // signals: parameters
     QMetaType::Void, QMetaType::QJsonObject,    3,
@@ -80,6 +83,7 @@ Q_CONSTINIT static const uint qt_meta_data_CLASSAuthorizationENDCLASS[] = {
  // slots: parameters
     QMetaType::Void,
     QMetaType::Void,
+    QMetaType::Void, QMetaType::Bool,    8,
     QMetaType::Void,
     QMetaType::Void,
 
@@ -95,19 +99,22 @@ Q_CONSTINIT const QMetaObject Authorization::staticMetaObject = { {
     qt_incomplete_metaTypeArray<qt_meta_stringdata_CLASSAuthorizationENDCLASS_t,
         // Q_OBJECT / Q_GADGET
         QtPrivate::TypeAndForceComplete<Authorization, std::true_type>,
-        // method 'authsignal'
+        // method 'auth_signal'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         QtPrivate::TypeAndForceComplete<QJsonObject, std::false_type>,
-        // method 'dbsignal'
+        // method 'signup_signal'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         QtPrivate::TypeAndForceComplete<QJsonObject, std::false_type>,
         // method 'slotReadyRead'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'authslot'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
-        // method 'dbslot'
+        // method 'success_slot'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        QtPrivate::TypeAndForceComplete<bool, std::false_type>,
         // method 'on_Login_bttn_clicked'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'on_sign_up_bttn_clicked'
         QtPrivate::TypeAndForceComplete<void, std::false_type>
     >,
     nullptr
@@ -119,26 +126,27 @@ void Authorization::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _i
         auto *_t = static_cast<Authorization *>(_o);
         (void)_t;
         switch (_id) {
-        case 0: _t->authsignal((*reinterpret_cast< std::add_pointer_t<QJsonObject>>(_a[1]))); break;
-        case 1: _t->dbsignal((*reinterpret_cast< std::add_pointer_t<QJsonObject>>(_a[1]))); break;
+        case 0: _t->auth_signal((*reinterpret_cast< std::add_pointer_t<QJsonObject>>(_a[1]))); break;
+        case 1: _t->signup_signal((*reinterpret_cast< std::add_pointer_t<QJsonObject>>(_a[1]))); break;
         case 2: _t->slotReadyRead(); break;
         case 3: _t->authslot(); break;
-        case 4: _t->dbslot(); break;
+        case 4: _t->success_slot((*reinterpret_cast< std::add_pointer_t<bool>>(_a[1]))); break;
         case 5: _t->on_Login_bttn_clicked(); break;
+        case 6: _t->on_sign_up_bttn_clicked(); break;
         default: ;
         }
     } else if (_c == QMetaObject::IndexOfMethod) {
         int *result = reinterpret_cast<int *>(_a[0]);
         {
             using _t = void (Authorization::*)(QJsonObject );
-            if (_t _q_method = &Authorization::authsignal; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
+            if (_t _q_method = &Authorization::auth_signal; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
                 *result = 0;
                 return;
             }
         }
         {
             using _t = void (Authorization::*)(QJsonObject );
-            if (_t _q_method = &Authorization::dbsignal; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
+            if (_t _q_method = &Authorization::signup_signal; *reinterpret_cast<_t *>(_a[1]) == _q_method) {
                 *result = 1;
                 return;
             }
@@ -165,26 +173,26 @@ int Authorization::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 6)
+        if (_id < 7)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 6;
+        _id -= 7;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 6)
+        if (_id < 7)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 6;
+        _id -= 7;
     }
     return _id;
 }
 
 // SIGNAL 0
-void Authorization::authsignal(QJsonObject _t1)
+void Authorization::auth_signal(QJsonObject _t1)
 {
     void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))) };
     QMetaObject::activate(this, &staticMetaObject, 0, _a);
 }
 
 // SIGNAL 1
-void Authorization::dbsignal(QJsonObject _t1)
+void Authorization::signup_signal(QJsonObject _t1)
 {
     void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))) };
     QMetaObject::activate(this, &staticMetaObject, 1, _a);

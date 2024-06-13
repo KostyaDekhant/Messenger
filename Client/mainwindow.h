@@ -16,6 +16,9 @@
 
 
 #include <QScrollBar>
+#include <QMessageBox>
+
+#include <QVBoxLayout>
 
 
 QT_BEGIN_NAMESPACE
@@ -41,15 +44,29 @@ private slots:
 
     void on_Auth_bttn_clicked();
 
+    void on_addChat_clicked();
+
 private:
     Ui::MainWindow *ui;
     QTcpSocket *socket;
     QByteArray Data;
     quint16 nextBlockSize;
     int descriptor;
+    int currentChat = 1;//-1
 
-    void SendToServer(QString str);
+
+    QWidget *user_widget;
+    QVBoxLayout *user_layout;
+
+    QList<QPushButton*> buttonList;
+
+    template<typename T>
+    void SendToServer(T arg);
     void SendUserDataToServer(QJsonObject userData);
+    void OnlineIcons(QStringList stringList);
+
+
+    void TypeMessageDetect(QString str);
 
     QJsonDocument doc;
     QJsonParseError docError;
@@ -58,11 +75,15 @@ private:
     QJsonObject user;
 public slots:
     void slotReadyRead();
-    void authslot(QJsonObject userData);
+    void auth_slot(QJsonObject userData);
+    void signup_slot(QJsonObject userData);
+    void onButtonClicked();
+
     //void SendSocketToServer();
     //void ClientDisconnected(QTcpSocket socket);
 signals:
-    void authsignal();
+    void authsignal(bool isSuccess);
+    void signupsignal(bool isSuccess);
     void authslotChanged();
 
 };

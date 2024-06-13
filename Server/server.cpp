@@ -5,11 +5,15 @@ struct User
 {
     QString name;
     int descrip;
+    int id;
 }users[100];
 
 Server::Server()
 {
-    if(this->listen(QHostAddress::Any, 2323))
+    setlocale(LC_ALL, "ru");
+    SetConsoleCP(1251);
+    SetConsoleOutputCP(1251);
+    if(this->listen(QHostAddress::Any, 27015))
     {
         qDebug() << "start";
     }
@@ -19,7 +23,8 @@ Server::Server()
     }
     nextBlockSize = 0;
     db = QSqlDatabase::addDatabase("QSQLITE", "SQLITE");
-    db.setDatabaseName("./../users.db"); //C:/qt projects/
+    //db.setDatabaseName("./../users.db"); //C:/qt projects/
+    db.setDatabaseName("./../messenger_db.db"); //C:/qt projects/
     if(db.open())
     {
         qDebug() << "База данных подключена успешно.";
@@ -29,62 +34,47 @@ Server::Server()
     {
         qDebug() << "Что-то пошло не так: " << db.lastError();
     }
+
+
     QTimer *timer = new QTimer();
     connect(timer, &QTimer::timeout, this, &Server::CheckSocketStatus);
-    timer->start(2000);
+    connect(timer, &QTimer::timeout, this, &Server::SendOnlineUsersToEverybody);
+    //timer->start(2000);
     //db.close();
 }
-
-bool Server::Authorization(QString username) //, QString password)
-{
-    QSqlQuery query(db);
-    query.prepare("SELECT name FROM user WHERE user.name LIKE ?");
-    query.addBindValue(username);
-    if (query.exec())
-        if(query.next())
-        {
-            qDebug() << username << " есть в базе данных";
-
-            return true;
-        }
-        else
-        {
-            qDebug() << username << " отсутствует в базе данных";
-        }
-    else {
-        qDebug() << "Error executing query: " << query.lastError().text();
-    }
-    return false;
-}
-
 
 void Server::incomingConnection(qintptr socketDescriptor)
 {
     socket = new QTcpSocket;
     socket->setSocketDescriptor(socketDescriptor);
     connect(socket, &QTcpSocket::readyRead, this, &Server::slotReadyRead);
-    connect(socket, &QTcpSocket::disconnected, socket, &QTcpSocket::deleteLater);
-    //connect(socket, &QTcpSocket::disconnected, this, &QTcpSocket::deleteLater);
+    connect(socket, &QTcpSocket::disconnected, this, &Server::slotDeleteLater);
 
+    //connect(socket, &QTcpSocket::disconnected, this, &QTcpSocket::deleteLater);
     //QString descrip = socketDescriptor;
-    Sockets.push_back(socket); //Сделать для сокетов имена, к примеру в list или map
+    //Sockets.push_back(socket); //Сделать для сокетов имена, к примеру в list или map
+
     qDebug() << "client connected " << socketDescriptor;
+
+    /*Sockets.insert(,socket);
     SendDescripToClient(socketDescriptor);
-    users[Counter++].descrip = socketDescriptor;
+    users[Counter++].descrip = socketDescriptor;*/
+
     //Counter++;
 }
 
-void Server::DeleteSocket(int index)
+void Server::slotDeleteLater()
 {
-    qDebug() << "Удалён " << index << " элемент";
-    QTcpSocket* Socket = new  QTcpSocket();
-    Socket->state() == !QAbstractSocket::ConnectedState;
-    Sockets.replace(index, Socket);//nullptr
+    socket = (QTcpSocket*)sender();
+    qDebug() << "Удалён " << socket << " элемент";
+    Sockets.erase(std::remove(Sockets.begin(), Sockets.end(), socket), Sockets.end());
+    socket->deleteLater();
 }
 
 //возможно, беда с новыми пользователями, они чёт отключаются с ошибкой
 void Server::CheckSocketStatus()
 {
+    /*
     int count = 0;
     for(QTcpSocket* Socket : Sockets)
     {
@@ -107,6 +97,7 @@ void Server::CheckSocketStatus()
 
         count++;
     }
+    */
 }
 
 
@@ -147,7 +138,7 @@ void Server::SetClientStatus(int index, int status)
 int Server::MaxPKUser()
 {
     QSqlQuery query(db);
-    query.prepare("SELECT MAX(pk_user) FROM user");
+    query.prepare("SELECT COALESCE(MAX(pk_user), 0) FROM user");
     int max = 0;
     if (query.exec()) {
         query.next();
@@ -158,13 +149,14 @@ int Server::MaxPKUser()
 
 void Server::WriteUserInfoToDB(QJsonObject user)
 {
+    qDebug() << "Json file " << user;
     QSqlQuery query(db);
     int max_pk = MaxPKUser()+1;
     query.prepare("INSERT INTO user (pk_user, name, is_online, password) VALUES (:pk_user, :name, :is_online, :password)"); //:pk_user,
     query.bindValue(":pk_user", max_pk);
-    query.bindValue(":name", user.value("username"));
+    query.bindValue(":name", user["username"].toString());
     query.bindValue(":is_online", 1);
-    query.bindValue(":password", user.value("password"));
+    query.bindValue(":password", user["password"].toString());
     //
     if (query.exec())
         qDebug() << "Добавление пользователя прошло успешно.";
@@ -173,6 +165,7 @@ void Server::WriteUserInfoToDB(QJsonObject user)
     }
 }
 
+//Id среди подключенных пользователей, потом это надо будет убрать или изменить
 int Server::GetIdClient(int descrip)
 {
     int count = 0;
@@ -185,6 +178,21 @@ int Server::GetIdClient(int descrip)
     }
     return -1;
 }
+
+//Брать инфу с базы, узнаём айди пользователя с таким ником
+int Server::GetDBIdClient(QString username)
+{
+    int index = -1;
+    QSqlQuery query(db);
+    query.prepare("SELECT pk_user FROM user WHERE user.name LIKE ?");
+    query.addBindValue(username);
+    if (query.exec()) {
+        query.next();
+        index = query.value(0).toInt();
+    }
+    return index;
+}
+
 
 void Server::slotReadyRead()
 {
@@ -213,63 +221,15 @@ void Server::slotReadyRead()
                 break;
             }
             QString str;
-            int descrip;
-            QJsonObject user;
-            QTime time;
-            //проверка типа
-            QString type = "";
-            in >> type;
-            qDebug() << "Тип сообщения: " << type;
-            if(type == "message")
-            {
-                in >> time >> str >> descrip;
-                QString sender_name = users[GetIdClient(descrip)].name;
-                qDebug() << sender_name << ": " << str;
-                //nextBlockSize = 0;
-                SendToClient(str, sender_name);
-            }
-            else if(type == "userinfo")
-            {
-                in >> user;
-                qDebug() << user;
-                //проверка на существование
-                QString username = user.value("username").toString();
-                int index = GetIdClient(user.value("descrip").toInt());
-                if(!Authorization(username))
-                {
-                    WriteUserInfoToDB(user);
-                    qDebug() << "Добавлен: " << user;
+            in >> str;
 
-                    if(index == -1)
-                    {
-                        qDebug() << "Error 1";
-                        return;
-                    }
-                    users[index].name = username;
-                }
-                else
-                {
-                    if(index == -1)
-                    {
-                        qDebug() << "Error 2";
-                        return;
-                    }
-                    qDebug() << "Пользователь не добавлен, так как уже существует";
-                    users[index].name = user.value("username").toString();
-                    users[index].descrip = user.value("descrip").toInt();
+            TypeMessageDetect(str);
+            /*
 
-                }
-                SetClientStatus(index, 1);
 
-                //Вынести это потом нормально, проверить на наличие в бд и потом при удачном входе разослать всем смс об этом
-                str = "client connected " + users[index].name;
-                SendOtherToClient(str, index);
+            */
 
-            }
-            else
-            {
-                qDebug() << "Неизвестный тип данных: " << type;
-            }
+
             nextBlockSize = 0;
 
 
@@ -282,25 +242,204 @@ void Server::slotReadyRead()
     }
 }
 
-void Server::SendToClient(QString str, QString username)
+
+void Server::TypeMessageDetect(QString str)
 {
-    Data.clear();
-    QDataStream out(&Data, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_6_7);
-    QString type = "message";
-    out << quint16(0) << type << QTime::currentTime() << str << username;
-    out.device()->seek(0);
-    out << quint16(Data.size() - sizeof(quint16));
-    int size_of_sockets = Sockets.size();
-    for(int i = 0; i < size_of_sockets; i++)
+    QJsonDocument jDoc = QJsonDocument::fromJson(str.toUtf8());
+    QJsonObject jObj = jDoc.object();
+    qDebug() << "JSON: " << jObj;
+    QString type = jObj["type"].toString();
+
+    if(type == "message")
     {
-        Sockets[i]->write(Data);
+        ConfMessage(jObj["value"]);
+    }
+    else if(type == "auth")
+    {
+        bool flag = false;
+        QJsonObject temp = jObj["value"].toObject();
+        if(!Validlogin(temp["username"].toString()))
+        {
+            qDebug() << "Пользователь " << temp["username"].toString() << "уже зарегистрирован!";
+            if(!CheckAuth(jObj["value"].toObject()))
+            {
+                qDebug() << "Не правильно введены логин или пароль!";
+            }
+            else
+            {
+                qDebug() << "Авторизация прошла успешно!";
+                flag = true;
+            }
+        }
+        else
+        {
+            qDebug() << "Пользователь " << temp["username"].toString() << "ещё не зарегистрирован!";
+        }
+
+        QJsonObject temp_obj;
+        temp_obj.insert("type", "auth");
+        temp_obj.insert("value", flag);
+        qDebug() << temp_obj["value"].toBool();
+
+        QJsonDocument jDoc = QJsonDocument(temp_obj);
+        QString jStr = QString(jDoc.toJson());
+        SendToClient(jStr, socket);
+        /*in >> user;
+        qDebug() << user;
+        //проверка на существование
+        QString username = user.value("username").toString();
+        int index = GetIdClient(user.value("descrip").toInt());
+        if(!Authorization(username))
+        {
+            WriteUserInfoToDB(user);
+            qDebug() << "Добавлен: " << user;
+
+            if(index == -1)
+            {
+                qDebug() << "Error 1";
+                return;
+            }
+            users[index].name = username;
+        }
+        else
+        {
+            if(index == -1)
+            {
+                qDebug() << "Error 2";
+                return;
+            }
+            qDebug() << "Пользователь не добавлен, так как уже существует";
+            users[index].name = user.value("username").toString();
+            users[index].descrip = user.value("descrip").toInt();
+
+        }
+        SetClientStatus(index, 1);
+
+        //id из бд
+        users[index].id = GetDBIdClient(users[index].name);
+
+        //Вынести это потом нормально, проверить на наличие в бд и потом при удачном входе разослать всем смс об этом
+        str = "client connected " + users[index].name;
+        SendOtherToClient(str, index);
+
+
+        */
+    }
+    else if(type == "signup")
+    {
+        bool flag = false;
+        QJsonObject temp = jObj["value"].toObject();
+        if(!Validlogin(temp["username"].toString()))
+        {
+            qDebug() << "Пользователь " << temp["username"].toString() << "уже зарегистрирован!";
+        }
+        else
+        {
+            qDebug() << "Регистрация прошла успешно!";
+            WriteUserInfoToDB(jObj["value"].toObject());
+            flag = true;
+        }
+        QJsonObject temp_obj;
+        temp_obj.insert("type", "signup");
+        temp_obj.insert("value", flag);
+        qDebug() << temp_obj["value"].toBool();
+
+        QJsonDocument jDoc = QJsonDocument(temp_obj);
+        QString jStr = QString(jDoc.toJson());
+        SendToClient(jStr, socket);
+    }
+    else
+    {
+        qDebug() << "Неизвестный тип данных: " << type;
     }
 }
 
 
+bool Server::CheckAuth(QJsonObject user)
+{
+
+    QSqlQuery query(db);
+    query.prepare("SELECT name, password FROM user WHERE name == :username");
+    query.bindValue(":username", user["username"].toString());
+    query.exec();
+    QSqlRecord rec = query.record();
+    query.next();
+    if (query.value(rec.indexOf("password")).toString() == user["password"].toString()) {
+        qDebug() << "Успешная авторизация " << user["username"].toString();
+         return true; //авториз
+    }
+    else {
+        qDebug() << "Ошибка при авторизации " <<  user["username"].toString();
+    }
+    return false;//не авториз
+}
+
+
+bool Server::Validlogin(QString username)
+{
+    QSqlQuery query(db);
+    query.prepare("SELECT name FROM user WHERE user.name LIKE ?");
+    query.addBindValue(username);
+    if (query.exec())
+        if(query.next())
+        {
+            qDebug() << username << " есть в базе данных";
+
+            return false;
+        }
+        else
+        {
+            qDebug() << username << " отсутствует в базе данных";
+        }
+    else {
+        qDebug() << "Error executing query: " << query.lastError().text();
+    }
+    return true;
+}
+
+void Server::ConfMessage(QJsonValue jVal)
+{
+
+}
+
+
+//убрать или переделать
+void Server::SendOnlineUsersToEverybody()
+{
+    /*int size_of_sockets = Sockets.size();
+
+    QStringList stringlist;
+    for(int i = 0; i <  size_of_sockets; i++)
+    {
+        if(Sockets[i]->state() == QAbstractSocket::ConnectedState && users[i].name != "")
+            stringlist << users[i].name;
+    }
+    if(!stringlist.size())
+        return;
+    SendOnlineUsers(stringlist);
+    qDebug() << stringlist;
+    qDebug() << "Список отправлен";
+    */
+}
+
+
+template<typename T>
+void Server::SendToClient(T arg, QTcpSocket* user)
+{
+    Data.clear();
+    QDataStream out(&Data, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_6_7);
+    out << quint16(0) << arg;
+    out.device()->seek(0);
+    out << quint16(Data.size() - sizeof(quint16));
+    if (user == nullptr) user = this->socket;
+    user->write(Data);
+}
+
+//три метода убрать тупо
 void Server::SendOtherToClient(QString str, int index)
 {
+    /*
     Data.clear();
     QDataStream out(&Data, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_6_7);
@@ -313,12 +452,31 @@ void Server::SendOtherToClient(QString str, int index)
     {
         if(i != index && Sockets[i]->state() == QAbstractSocket::ConnectedState)
             Sockets[i]->write(Data);
-    }
+    }*/
 }
 
+void Server::SendOnlineUsers(QStringList stringList)
+{
+    /*
+    Data.clear();
+    QDataStream out(&Data, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_6_7);
+    QString type = "who's_online";
+    out << quint16(0) << type << stringList;
+    out.device()->seek(0);
+    out << quint16(Data.size() - sizeof(quint16));
+    int size_of_sockets = Sockets.size();
+    for(int i = 0; i < size_of_sockets; i++)
+    {
+        if(Sockets[i]->state() == QAbstractSocket::ConnectedState && users[i].name != "")
+            Sockets[i]->write(Data);
+    }
+    */
+}
 
 void Server::SendDescripToClient(int desctip)
 {
+    /*
     Data.clear();
     QDataStream out(&Data, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_6_7);
@@ -340,6 +498,7 @@ void Server::SendDescripToClient(int desctip)
             //qDebug() << "else";
         }
     }
+    */
 }
 
 //убрать
