@@ -15,6 +15,7 @@
 #include <QtWidgets/QFormLayout>
 #include <QtWidgets/QFrame>
 #include <QtWidgets/QGridLayout>
+#include <QtWidgets/QLabel>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QMenu>
@@ -46,9 +47,10 @@ public:
     QFrame *frame;
     QGridLayout *gridLayout_2;
     QPushButton *send_msg_bttn;
-    QPushButton *connectBttn;
-    QLineEdit *lineEdit;
+    QLabel *chat;
     QTextBrowser *textBrowser;
+    QLineEdit *lineEdit;
+    QPushButton *connectBttn;
     QMenuBar *menubar;
     QMenu *menu;
     QStatusBar *statusbar;
@@ -126,24 +128,29 @@ public:
         send_msg_bttn = new QPushButton(frame);
         send_msg_bttn->setObjectName("send_msg_bttn");
 
-        gridLayout_2->addWidget(send_msg_bttn, 2, 1, 1, 1);
+        gridLayout_2->addWidget(send_msg_bttn, 6, 1, 1, 1);
 
-        connectBttn = new QPushButton(frame);
-        connectBttn->setObjectName("connectBttn");
+        chat = new QLabel(frame);
+        chat->setObjectName("chat");
 
-        gridLayout_2->addWidget(connectBttn, 0, 0, 1, 2);
-
-        lineEdit = new QLineEdit(frame);
-        lineEdit->setObjectName("lineEdit");
-
-        gridLayout_2->addWidget(lineEdit, 2, 0, 1, 1);
+        gridLayout_2->addWidget(chat, 2, 0, 1, 1);
 
         textBrowser = new QTextBrowser(frame);
         textBrowser->setObjectName("textBrowser");
         textBrowser->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
         textBrowser->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-        gridLayout_2->addWidget(textBrowser, 1, 0, 1, 2);
+        gridLayout_2->addWidget(textBrowser, 5, 0, 1, 2);
+
+        lineEdit = new QLineEdit(frame);
+        lineEdit->setObjectName("lineEdit");
+
+        gridLayout_2->addWidget(lineEdit, 6, 0, 1, 1);
+
+        connectBttn = new QPushButton(frame);
+        connectBttn->setObjectName("connectBttn");
+
+        gridLayout_2->addWidget(connectBttn, 3, 1, 1, 1);
 
 
         formLayout_2->setWidget(0, QFormLayout::FieldRole, frame);
@@ -173,6 +180,7 @@ public:
         Auth_bttn->setText(QCoreApplication::translate("MainWindow", "\320\220\320\262\321\202\320\276\321\200\320\270\320\267\320\260\321\206\320\270\321\217", nullptr));
         findUser->setText(QCoreApplication::translate("MainWindow", "\320\235\320\260\320\271\321\202\320\270", nullptr));
         send_msg_bttn->setText(QCoreApplication::translate("MainWindow", ">", nullptr));
+        chat->setText(QCoreApplication::translate("MainWindow", "chat", nullptr));
         connectBttn->setText(QCoreApplication::translate("MainWindow", "Connect", nullptr));
         menu->setTitle(QString());
     } // retranslateUi

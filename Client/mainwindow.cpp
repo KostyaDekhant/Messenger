@@ -81,6 +81,8 @@ void MainWindow::TypeMessageDetect(QString str)
 
     if(type == "message")
     {
+        if(currentChat == -1)
+            return;
         QJsonObject temp = jObj["value"].toObject();
         QString time = temp["time"].toString(),
                 sender =  temp["sender"].toString(),
@@ -94,8 +96,6 @@ void MainWindow::TypeMessageDetect(QString str)
 
         else //правая сторона, свои смс
         {
-            //full_msg = str + " ";
-
             ui->textBrowser->insertHtml(
                 "<br><p style=\"text-align:right;\"><font size=\"5\"><b>" + text + "</b></font></p>"
                 "<p style=\"text-align:right;\"><font size=\"1\">" + time + "</font></p>");
@@ -152,6 +152,10 @@ void MainWindow::TypeMessageDetect(QString str)
     {
         currentChat = jObj["id_chat"].toInt();
         AcceptMessResponse(jObj["value"]);
+
+        QJsonObject temp = jObj["value"].toObject();
+
+        ui->chat->setText("id: " + QString::number(jObj["id_chat"].toInt()));
     }
     else if (type == "find_user")
     {
@@ -167,6 +171,7 @@ void MainWindow::TypeMessageDetect(QString str)
 void MainWindow::AcceptMessResponse(QJsonValue value)
 {
     ui->textBrowser->clear();
+
     QJsonArray jArray = value.toArray();
     if (!jArray.size()) {
         ui->textBrowser->append("Начало диалога!");
@@ -235,6 +240,7 @@ void MainWindow::onButtonClicked()
 {
     QPushButton* button = qobject_cast<QPushButton*>(sender());
     //SendToServer(button->text());
+
 
     QJsonObject jObj;
     jObj.insert("type", "open_chat");

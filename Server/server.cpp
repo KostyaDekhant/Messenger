@@ -14,11 +14,11 @@ Server::Server()
     SetConsoleOutputCP(1251);
     if(this->listen(QHostAddress::Any, 27015))
     {
-        qDebug() << "start";
+        qDebug() << "Старт";
     }
     else
     {
-        qDebug() << "Error: ";
+        qDebug() << "Ошибка при запуске сервера!";
     }
     nextBlockSize = 0;
     db = QSqlDatabase::addDatabase("QSQLITE", "SQLITE");
@@ -50,13 +50,13 @@ void Server::incomingConnection(qintptr socketDescriptor)
     connect(socket, &QTcpSocket::readyRead, this, &Server::slotReadyRead);
     connect(socket, &QTcpSocket::disconnected, this, &Server::slotDeleteLater);
 
-    qDebug() << "client connected " << socketDescriptor;
+    qDebug() << "подключён пользователь " << socketDescriptor;
 }
 
 void Server::slotDeleteLater()
 {
     socket = (QTcpSocket*)sender();
-    qDebug() << "Удалён " << socket << " элемент";
+    qDebug() << "удалён " << socket <<;
     Sockets.erase(std::remove(Sockets.begin(), Sockets.end(), socket), Sockets.end());
     socket->deleteLater();
 }
@@ -153,7 +153,7 @@ void Server::WriteUserInfoToDB(QJsonObject user)
     if (query.exec())
         qDebug() << "Добавление пользователя прошло успешно.";
     else {
-        qDebug() << "Error executing query: " << query.lastError().text();
+        qDebug() << "Ошибка запроса: " << query.lastError().text();
     }
 }
 
@@ -266,7 +266,6 @@ void Server::TypeMessageDetect(QString str)
         if(flag)
         {
             int id = GetDBIdClient(temp["username"].toString());
-            qDebug() << "ID " << id;
             temp_obj.insert("id", id);
             Sockets.insert(temp["username"].toString(), socket); //Список пользователей
         }
@@ -295,13 +294,9 @@ void Server::TypeMessageDetect(QString str)
         if(flag)
         {
             int id = GetDBIdClient(temp["username"].toString());
-            qDebug() << "ID " << id;
             temp_obj.insert("id", id);
             Sockets.insert(temp["username"].toString(), socket);
         }
-
-        qDebug() << temp_obj["value"].toBool();
-
         QJsonDocument jDoc = QJsonDocument(temp_obj);
         QString jStr = QString(jDoc.toJson());
         SendToClient(jStr, socket);
@@ -310,11 +305,8 @@ void Server::TypeMessageDetect(QString str)
     else if (type == "open_chat")
     {
         QJsonObject temp = jObj["value"].toObject();
-
-
         int id = findOrCreateChatId(temp["sender"].toString(), temp["recipient"].toString());
         qDebug() << "Id чата: " << id;
-
         AcceptReqForDialogs(id);
     }
     else if(type == "find_user")
@@ -344,7 +336,6 @@ void Server::AcceptReqForFinduser(QJsonValue searchUser)
         inchat.bindValue(":userID", query.value(rec.indexOf("pk_user")).toInt());
         inchat.bindValue(":chatID", searchUser["pk_chat"].toInt());//
         inchat.exec();
-        //qDebug() << query.value(rec.indexOf("pk_user")).toString() << " " << searchUser["pk_chat"].toString();
         if (!inchat.next())
             jArray.push_back(query.value(rec.indexOf("name")).toString());
     }
@@ -397,7 +388,7 @@ bool Server::Validlogin(QString username)
             qDebug() << username << " отсутствует в базе данных";
         }
     else {
-        qDebug() << "Error executing query: " << query.lastError().text();
+        qDebug() << "Ошибка запроса: " << query.lastError().text();
     }
     return true;
 }
@@ -481,9 +472,9 @@ void Server::AcceptReqForDialogs(int chatID)
     query.prepare("SELECT DISTINCT messages.message, messages.time, user.name FROM user, "
                   "messages JOIN chat ON messages.pk_chat = :chatId WHERE messages.pk_user == user.pk_user ORDER BY time ASC");
     query.bindValue(":chatId", chatID);
-    if (query.exec()) qDebug() << "Successful get messages from DB!";
+    if (query.exec()) qDebug() << "Успешно получены сообщения из БД!";
     else {
-        qDebug() << "Error get messages from DB";
+        qDebug() << "Ошибка при получении сообщений из БД!";
         return;
     }
 
@@ -578,12 +569,9 @@ void Server::SendOnlineUsersToEverybody()
     QString jStr = QString(jDoc.toJson());
 
     SendToClient(jStr);
-    //qDebug() << stringlist;
-    //qDebug() << "Список отправлен";
-
 }
 
-
+//Отправка сообщений пользователю
 template<typename T>
 void Server::SendToClient(T arg, QTcpSocket* user)
 {
