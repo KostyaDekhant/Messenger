@@ -42,6 +42,8 @@ private:
     void SendSignalToUpdateDialog(QJsonObject message);
     void AcceptReqForDialogs(int chatID);
 
+    void AcceptReqForFinduser(QJsonValue searchUser);
+
     int findOrCreateChatId(const QString& user1, const QString& user2);
 
     bool Validlogin(QString username);

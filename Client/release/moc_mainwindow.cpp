@@ -42,10 +42,10 @@ constexpr auto qt_meta_stringdata_CLASSMainWindowENDCLASS = QtMocHelpers::string
     "signupsignal",
     "authslotChanged",
     "on_connectBttn_clicked",
-    "on_pushButton_2_clicked",
+    "on_send_msg_bttn_clicked",
     "on_lineEdit_returnPressed",
     "on_Auth_bttn_clicked",
-    "on_addChat_clicked",
+    "on_findUser_clicked",
     "slotReadyRead",
     "auth_slot",
     "userData",
@@ -124,13 +124,13 @@ Q_CONSTINIT const QMetaObject MainWindow::staticMetaObject = { {
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'on_connectBttn_clicked'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
-        // method 'on_pushButton_2_clicked'
+        // method 'on_send_msg_bttn_clicked'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'on_lineEdit_returnPressed'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'on_Auth_bttn_clicked'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
-        // method 'on_addChat_clicked'
+        // method 'on_findUser_clicked'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'slotReadyRead'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
@@ -156,10 +156,10 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 1: _t->signupsignal((*reinterpret_cast< std::add_pointer_t<bool>>(_a[1]))); break;
         case 2: _t->authslotChanged(); break;
         case 3: _t->on_connectBttn_clicked(); break;
-        case 4: _t->on_pushButton_2_clicked(); break;
+        case 4: _t->on_send_msg_bttn_clicked(); break;
         case 5: _t->on_lineEdit_returnPressed(); break;
         case 6: _t->on_Auth_bttn_clicked(); break;
-        case 7: _t->on_addChat_clicked(); break;
+        case 7: _t->on_findUser_clicked(); break;
         case 8: _t->slotReadyRead(); break;
         case 9: _t->auth_slot((*reinterpret_cast< std::add_pointer_t<QJsonObject>>(_a[1]))); break;
         case 10: _t->signup_slot((*reinterpret_cast< std::add_pointer_t<QJsonObject>>(_a[1]))); break;

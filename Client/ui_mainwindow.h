@@ -40,12 +40,12 @@ public:
     QFrame *frame_3;
     QGridLayout *gridLayout_3;
     QLineEdit *username_lb;
-    QPushButton *addChat;
+    QPushButton *findUser;
     QScrollArea *scrollArea;
     QWidget *scrollAreaWidgetContents;
     QFrame *frame;
     QGridLayout *gridLayout_2;
-    QPushButton *pushButton_2;
+    QPushButton *send_msg_bttn;
     QPushButton *connectBttn;
     QLineEdit *lineEdit;
     QTextBrowser *textBrowser;
@@ -58,6 +58,7 @@ public:
         if (MainWindow->objectName().isEmpty())
             MainWindow->setObjectName("MainWindow");
         MainWindow->resize(544, 440);
+        MainWindow->setAutoFillBackground(false);
         centralwidget = new QWidget(MainWindow);
         centralwidget->setObjectName("centralwidget");
         formLayout_2 = new QFormLayout(centralwidget);
@@ -90,10 +91,10 @@ public:
 
         gridLayout_3->addWidget(username_lb, 0, 0, 1, 1);
 
-        addChat = new QPushButton(frame_3);
-        addChat->setObjectName("addChat");
+        findUser = new QPushButton(frame_3);
+        findUser->setObjectName("findUser");
 
-        gridLayout_3->addWidget(addChat, 1, 0, 1, 1);
+        gridLayout_3->addWidget(findUser, 1, 0, 1, 1);
 
 
         formLayout->setWidget(1, QFormLayout::SpanningRole, frame_3);
@@ -122,10 +123,10 @@ public:
         frame->setFrameShadow(QFrame::Raised);
         gridLayout_2 = new QGridLayout(frame);
         gridLayout_2->setObjectName("gridLayout_2");
-        pushButton_2 = new QPushButton(frame);
-        pushButton_2->setObjectName("pushButton_2");
+        send_msg_bttn = new QPushButton(frame);
+        send_msg_bttn->setObjectName("send_msg_bttn");
 
-        gridLayout_2->addWidget(pushButton_2, 2, 1, 1, 1);
+        gridLayout_2->addWidget(send_msg_bttn, 2, 1, 1, 1);
 
         connectBttn = new QPushButton(frame);
         connectBttn->setObjectName("connectBttn");
@@ -170,8 +171,8 @@ public:
     {
         MainWindow->setWindowTitle(QCoreApplication::translate("MainWindow", "MainWindow", nullptr));
         Auth_bttn->setText(QCoreApplication::translate("MainWindow", "\320\220\320\262\321\202\320\276\321\200\320\270\320\267\320\260\321\206\320\270\321\217", nullptr));
-        addChat->setText(QCoreApplication::translate("MainWindow", "\320\241\320\276\320\267\320\264\320\260\321\202\321\214 \321\207\320\260\321\202", nullptr));
-        pushButton_2->setText(QCoreApplication::translate("MainWindow", ">", nullptr));
+        findUser->setText(QCoreApplication::translate("MainWindow", "\320\235\320\260\320\271\321\202\320\270", nullptr));
+        send_msg_bttn->setText(QCoreApplication::translate("MainWindow", ">", nullptr));
         connectBttn->setText(QCoreApplication::translate("MainWindow", "Connect", nullptr));
         menu->setTitle(QString());
     } // retranslateUi

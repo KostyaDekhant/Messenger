@@ -44,7 +44,7 @@ private slots:
 
     void on_Auth_bttn_clicked();
 
-    void on_addChat_clicked();
+    void on_findUser_clicked();
 
 private:
     Ui::MainWindow *ui;
@@ -63,11 +63,16 @@ private:
     template<typename T>
     void SendToServer(T arg);
 
+    void deleteLater();
+
     void OnlineIcons(QJsonArray stringList);
 
     void AcceptMessResponse(QJsonValue value);
 
     void TypeMessageDetect(QString str);
+
+    void clearLayout(QVBoxLayout* layout);
+
 
     QJsonDocument doc;
     QJsonParseError docError;

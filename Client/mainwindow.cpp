@@ -14,21 +14,22 @@ MainWindow::MainWindow(QWidget *parent)
 
     socket = new QTcpSocket(this);
     connect(socket, &QTcpSocket::readyRead, this, &MainWindow::slotReadyRead);
-    //connect(socket, &QTcpSocket::disconnected,  this, &MainWindow::SendSocketToServer)
-    connect(socket, &QTcpSocket::disconnected, socket, &QTcpSocket::deleteLater);
+    connect(socket, &QTcpSocket::disconnected,  this, &MainWindow::deleteLater);
+    //connect(socket, &QTcpSocket::disconnected, socket, &QTcpSocket::deleteLater);
 
     user_widget = new QWidget;
     user_layout = new QVBoxLayout;
     user_widget->setLayout(user_layout);
+    user_layout->setAlignment(Qt::AlignTop); // устанавливаем выравнивание для layout
 
     ui->scrollArea->setWidgetResizable(true);
     ui->scrollArea->setWidget(user_widget);
 
-    user_layout->setAlignment(Qt::AlignTop); // устанавливаем выравнивание для layout
-
     nextBlockSize = 0;
 
     ui->connectBttn->click();
+
+    ui->findUser->setEnabled(false);
 }
 
 
@@ -49,6 +50,11 @@ void MainWindow::on_connectBttn_clicked()
         qDebug() << "Успешное подключение к серверу";
         ui->connectBttn->setEnabled(false);
     }
+}
+void MainWindow::deleteLater()
+{
+
+    socket->deleteLater();
 }
 
 //Отправка сообщений на сервер
@@ -147,6 +153,10 @@ void MainWindow::TypeMessageDetect(QString str)
         currentChat = jObj["id_chat"].toInt();
         AcceptMessResponse(jObj["value"]);
     }
+    else if (type == "find_user")
+    {
+        OnlineIcons(jObj["value"].toArray());
+    }
     else
     {
         qDebug() << "Неизвестный тип данных: " << type;
@@ -244,35 +254,32 @@ void MainWindow::onButtonClicked()
     ui->textBrowser->clear();
 }
 
+//Очистка кнопок
+void MainWindow::clearLayout(QVBoxLayout* layout)
+{
+    for(int i = layout->count() - 1; i >= 0; i--){
+        QPushButton *button = qobject_cast<QPushButton*>(layout->itemAt(i)->widget());
+        button->hide();
+        delete button;
+    }
+}
+
 //Вывод пользователей, которые онлайн
 void MainWindow::OnlineIcons(QJsonArray stringList)
 {
     bool add_flag = false;
 
+    clearLayout(user_layout);
 
     for(int i = 0; i < stringList.size(); i++) {
         QJsonValue jsonValue = stringList.at(i);
 
-        qDebug() << i << " " << jsonValue.toString() ;
         if(jsonValue.toString() == user["username"].toString())
             continue;
-
-        bool flag = false;
-        for(QPushButton* bttn : buttonList)
-        {
-            if(bttn->text() == jsonValue.toString())
-            {
-                flag = true;
-                break;
-            }
-        }
-        if(flag)
-            continue;
-
         QPushButton* button = new QPushButton(jsonValue.toString());
         button->setFixedSize(ui->scrollArea->viewport()->size().width()-18, 40);
+        button->show();
         user_layout->addWidget(button);
-        buttonList.append(button);
 
         connect(button, SIGNAL(clicked()), this, SLOT(onButtonClicked()));
 
@@ -280,13 +287,6 @@ void MainWindow::OnlineIcons(QJsonArray stringList)
     }
 
     ui->scrollArea->setWidgetResizable(true);
-
-    if(add_flag)
-    {
-        qDebug() << "добавлена кнопка";
-    }
-    else
-        qDebug() << "кнопка не добавлена ";
 }
 
 //Данные о пользователе с окна авторизации
@@ -358,12 +358,26 @@ void MainWindow::on_Auth_bttn_clicked()
 {
     this->hide();
     auth->show();
+    ui->findUser->setEnabled(true);
     //emit authsignal();
 }
 
-//Создание чата
-void MainWindow::on_addChat_clicked()
+//Поиск пользователей
+void MainWindow::on_findUser_clicked()
 {
-    QString chat_name = ui->username_lb->text();
+    QString username = ui->username_lb->text();
+
+    QJsonObject jObj;
+    jObj.insert("type", "find_user");
+    QJsonObject temp;
+    temp.insert("sender", user["username"].toString());
+    temp.insert("name", username);
+    //temp.insert("pk_chat", currentChat);
+    jObj.insert("value", temp);
+
+    QJsonDocument jDoc = QJsonDocument{jObj};
+    QString jStr = QString(jDoc.toJson());
+    SendToServer(jStr);
+
 }
 

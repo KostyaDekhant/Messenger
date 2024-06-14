@@ -1,6 +1,5 @@
 #include <server.h>
 
-
 struct User
 {
     QString name;
@@ -38,7 +37,8 @@ Server::Server()
 
     QTimer *timer = new QTimer();
     //connect(timer, &QTimer::timeout, this, &Server::CheckSocketStatus);
-    connect(timer, &QTimer::timeout, this, &Server::SendOnlineUsersToEverybody);
+    //connect(timer, &QTimer::timeout, this, &Server::SendOnlineUsersToEverybody);
+
     timer->start(2000);
     //db.close();
 }
@@ -273,47 +273,6 @@ void Server::TypeMessageDetect(QString str)
         QJsonDocument jDoc = QJsonDocument(temp_obj);
         QString jStr = QString(jDoc.toJson());
         SendToClient(jStr, socket);
-
-        /*in >> user;
-        qDebug() << user;
-        //проверка на существование
-        QString username = user.value("username").toString();
-        int index = GetIdClient(user.value("descrip").toInt());
-        if(!Authorization(username))
-        {
-            WriteUserInfoToDB(user);
-            qDebug() << "Добавлен: " << user;
-
-            if(index == -1)
-            {
-                qDebug() << "Error 1";
-                return;
-            }
-            users[index].name = username;
-        }
-        else
-        {
-            if(index == -1)
-            {
-                qDebug() << "Error 2";
-                return;
-            }
-            qDebug() << "Пользователь не добавлен, так как уже существует";
-            users[index].name = user.value("username").toString();
-            users[index].descrip = user.value("descrip").toInt();
-
-        }
-        SetClientStatus(index, 1);
-
-        //id из бд
-        users[index].id = GetDBIdClient(users[index].name);
-
-        //Вынести это потом нормально, проверить на наличие в бд и потом при удачном входе разослать всем смс об этом
-        str = "client connected " + users[index].name;
-        SendOtherToClient(str, index);
-
-
-        */
     }
     else if(type == "signup")
     {
@@ -358,11 +317,47 @@ void Server::TypeMessageDetect(QString str)
 
         AcceptReqForDialogs(id);
     }
+    else if(type == "find_user")
+    {
+        AcceptReqForFinduser(jObj["value"].toObject());
+    }
     else
     {
         qDebug() << "Неизвестный тип данных: " << type;
     }
 }
+
+//Поиск пользователя
+void Server::AcceptReqForFinduser(QJsonValue searchUser)
+{
+    QSqlQuery query(db);
+    query.prepare("SELECT user.pk_user, user.name FROM user WHERE user.name LIKE :name AND user.name <> :sender");
+    query.bindValue(":name", "%" + searchUser["name"].toString() + "%");
+    query.bindValue(":sender", searchUser["sender"].toString());
+    query.exec();
+
+    QSqlRecord rec = query.record();
+    QJsonArray jArray;
+    while (query.next()){
+        QSqlQuery inchat(db);
+        inchat.prepare("SELECT * FROM chat_user WHERE chat_user.pk_user == :userID AND chat_user.pk_chat == :chatID");
+        inchat.bindValue(":userID", query.value(rec.indexOf("pk_user")).toInt());
+        inchat.bindValue(":chatID", searchUser["pk_chat"].toInt());//
+        inchat.exec();
+        //qDebug() << query.value(rec.indexOf("pk_user")).toString() << " " << searchUser["pk_chat"].toString();
+        if (!inchat.next())
+            jArray.push_back(query.value(rec.indexOf("name")).toString());
+    }
+    QJsonObject jObj;
+
+    jObj.insert("type", "find_user");
+    jObj.insert("value", jArray);
+
+    QJsonDocument jDoc = QJsonDocument{jObj};
+    QString jStr = QString(jDoc.toJson());
+    SendToClient(jStr);
+}
+
 
 //Авторизация
 bool Server::CheckAuth(QJsonObject user)
@@ -583,8 +578,8 @@ void Server::SendOnlineUsersToEverybody()
     QString jStr = QString(jDoc.toJson());
 
     SendToClient(jStr);
-    qDebug() << stringlist;
-    qDebug() << "Список отправлен";
+    //qDebug() << stringlist;
+    //qDebug() << "Список отправлен";
 
 }
 
